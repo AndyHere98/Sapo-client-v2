@@ -1,26 +1,28 @@
-import React, { useEffect, useState } from "react";
-import { Card, Row, Col, Table, Badge, Button } from "react-bootstrap";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import { adminService, orderService } from "../../services/api";
-import { AdminOrderSummary } from "../../types/api";
-import { LoadingSpinner } from "../../components/LoadingSpinner";
-import { MenuModal } from "../../components/MenuModal";
-import { LayoutDashboard, PlusCircle } from "lucide-react";
-import { useToast } from "../../contexts/ToastContext";
-import { EmptyState } from "../../components/EmptyState";
+import React, { useEffect, useState } from 'react';
+import { Card, Row, Col, Table, Badge, Button, Form } from 'react-bootstrap';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { adminService, orderService } from '../../services/api';
+import { AdminOrderSummary, OrderItem } from '../../types/api';
+import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { MenuModal } from '../../components/MenuModal';
+import { OrderModal } from '../../components/OrderModal';
+import DeleteOrderModal from '../../components/DeleteOrderModal';
+import { PlusCircle, Edit2, Trash2, LayoutDashboard } from 'lucide-react';
+import { useToast } from '../../contexts/ToastContext';
+import { EmptyState } from '../../components/EmptyState';
+import { format, parse, isBefore } from 'date-fns';
+import { config } from '../../config/config';
+
+type TimeRange = 'week' | 'month' | 'year';
 
 export const AdminOrders: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<AdminOrderSummary | null>(null);
   const [showPlaceOrder, setShowPlaceOrder] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
+  const [timeRange, setTimeRange] = useState<TimeRange>('week');
   const { showToast, handleApiError } = useToast();
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export const AdminOrders: React.FC = () => {
   const handlePlaceOrder = async (orderData: any) => {
     try {
       await orderService.placeOrder(orderData);
-      showToast("success", "Đặt đơn hàng", "Đơn hàng đã được tạo thành công");
+      showToast('success', 'Đặt đơn hàng', 'Đơn hàng đã được tạo thành công');
       setShowPlaceOrder(false);
       fetchOrderSummary();
     } catch (error) {
@@ -49,8 +51,53 @@ export const AdminOrders: React.FC = () => {
     }
   };
 
-  if (loading) return <LoadingSpinner centered />;
+  const isBeforeCutoff = (orderDate: string) => {
+    const orderDateTime = new Date(orderDate);
+    const cutoffTime = parse(config.orderCutoffTime, "HH:mm", orderDateTime);
+    return isBefore(orderDateTime, cutoffTime);
+  };
 
+  const handleOrderUpdate = async (orderData: any) => {
+    if (!selectedOrder?.id) return;
+    try {
+      await orderService.updateOrder(selectedOrder.id, orderData);
+      showToast('success', 'Cập nhật đơn hàng', 'Đơn hàng đã được cập nhật thành công');
+      fetchOrderSummary();
+      setShowOrderModal(false);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!selectedOrder?.id) return;
+    try {
+      await orderService.deleteOrder(selectedOrder.id);
+      showToast('success', 'Xoá đơn hàng', 'Đơn hàng đã được xoá thành công');
+      fetchOrderSummary();
+      setShowDeleteModal(false);
+    } catch (error) {
+      handleApiError(error);
+    }
+  };
+
+  const getChartData = () => {
+    if (!summary) return [];
+    
+    switch (timeRange) {
+      case 'week':
+        return summary.dailyOrderStats.slice(-7);
+      case 'month':
+        return summary.dailyOrderStats.slice(-30);
+      case 'year':
+        return summary.dailyOrderStats.slice(-365);
+      default:
+        return summary.dailyOrderStats;
+    }
+  };
+
+  if (loading) return <LoadingSpinner centered />;
+  
   if (!summary) {
     return (
       <EmptyState
@@ -65,16 +112,8 @@ export const AdminOrders: React.FC = () => {
     <div className="admin-orders">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Quản lý đơn hàng</h1>
-        <Button
-          variant="primary"
-          className="d-flex align-items-center gap-2"
-          onClick={() => setShowPlaceOrder(true)}
-        >
-          <PlusCircle size={20} />
-          Tạo đơn hàng
-        </Button>
       </div>
-
+      
       {/* Stats Cards */}
       <Row className="g-4 mb-4">
         <Col md={3}>
@@ -113,12 +152,21 @@ export const AdminOrders: React.FC = () => {
 
       {/* Order Chart */}
       <Card className="mb-4">
-        <Card.Header>
+        <Card.Header className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Thống kê đơn hàng</h5>
+          <Form.Select 
+            style={{ width: 'auto' }}
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value as TimeRange)}
+          >
+            <option value="week">Tuần này</option>
+            <option value="month">Tháng này</option>
+            <option value="year">Năm nay</option>
+          </Form.Select>
         </Card.Header>
         <Card.Body>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={summary.dailyOrderStats}>
+            <BarChart data={getChartData()}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" />
               <YAxis />
@@ -130,99 +178,131 @@ export const AdminOrders: React.FC = () => {
         </Card.Body>
       </Card>
 
-      <Row className="g-4">
-        {/* Recent Orders */}
-        <Col lg={8}>
-          <Card>
-            <Card.Header>
-              <h5 className="mb-0">Đơn hàng gần đây</h5>
-            </Card.Header>
-            <Card.Body className="p-0">
-              <Table hover responsive>
-                <thead>
-                  <tr>
-                    <th>Mã đơn</th>
-                    <th>Khách hàng</th>
-                    <th>Trạng thái</th>
-                    <th>Tổng tiền</th>
-                    <th>Thao tác</th>
+      {/* Recent Orders */}
+      <Card>
+        <Card.Header className="d-flex justify-content-between align-items-center">
+          <h5 className="mb-0">Đơn hàng gần đây</h5>
+          <Button 
+            variant="primary"
+            className="d-flex align-items-center gap-2"
+            onClick={() => setShowPlaceOrder(true)}
+          >
+            <PlusCircle size={20} />
+            Tạo đơn hàng
+          </Button>
+        </Card.Header>
+        <Card.Body className="p-0">
+          <Table hover responsive>
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Ngày đặt</th>
+                <th>Khách hàng</th>
+                <th>Ghi chú</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summary.recentOrders.map((order) => {
+                const isEditable = isBeforeCutoff(order.createdAt || '');
+                return (
+                  <tr 
+                    key={order.id}
+                    onDoubleClick={() => {
+                      setSelectedOrder(order);
+                      setShowOrderModal(true);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <td>{order.id}</td>
+                    <td>{format(new Date(order.createdAt || ''), 'dd/MM/yyyy HH:mm')}</td>
+                    <td>{order.customerName}</td>
+                    <td>{order.note || '-'}</td>
+                    <td>{order.totalPrice?.toLocaleString()} đ</td>
+                    <td>
+                      <Badge bg={
+                        order.status === 'completed' ? 'success' :
+                        order.status === 'cancelled' ? 'danger' : 'warning'
+                      }>
+                        {order.status}
+                      </Badge>
+                    </td>
+                    <td>
+                      <div className="d-flex gap-2">
+                        {isEditable && (
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="outline-primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrder(order);
+                                setShowOrderModal(true);
+                              }}
+                            >
+                              <Edit2 size={16} />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline-danger"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrder(order);
+                                setShowDeleteModal(true);
+                              }}
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {summary.recentOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td>{order.id}</td>
-                      <td>{order.customerName}</td>
-                      <td>
-                        <Badge
-                          bg={
-                            order.status === "completed"
-                              ? "success"
-                              : order.status === "cancelled"
-                              ? "danger"
-                              : "warning"
-                          }
-                        >
-                          {order.status}
-                        </Badge>
-                      </td>
-                      <td>{order.totalPrice?.toLocaleString()} đ</td>
-                      <td>
-                        <Button size="sm" variant="outline-primary">
-                          Chi tiết
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Card.Body>
-          </Card>
-        </Col>
+                );
+              })}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
 
-        {/* Popular Dishes */}
-        <Col lg={4}>
-          <Card>
-            <Card.Header>
-              <h5 className="mb-0">Món ăn phổ biến</h5>
-            </Card.Header>
-            <Card.Body className="p-0">
-              <Table hover>
-                <thead>
-                  <tr>
-                    <th>Món ăn</th>
-                    <th>Số lượng</th>
-                    <th>Doanh thu</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.popularDishes.map((dish, index) => (
-                    <tr key={index}>
-                      <td>{dish.dishName}</td>
-                      <td>{dish.orderCount}</td>
-                      <td>{dish.totalRevenue.toLocaleString()} đ</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Place Order Modal */}
+      {/* Modals */}
       <MenuModal
         show={showPlaceOrder}
         onHide={() => setShowPlaceOrder(false)}
         customerInfo={{
-          customerName: "",
-          customerPhone: "",
-          customerEmail: "",
+          customerName: '',
+          customerPhone: '',
+          customerEmail: ''
         }}
         cart={[]}
         total={0}
         onSubmit={handlePlaceOrder}
       />
+
+      {selectedOrder && (
+        <>
+          <OrderModal
+            show={showOrderModal}
+            onHide={() => {
+              setShowOrderModal(false);
+              setSelectedOrder(null);
+            }}
+            order={selectedOrder}
+            isEditable={isBeforeCutoff(selectedOrder.createdAt || '')}
+            onSubmit={handleOrderUpdate}
+            title={`Mã đơn hàng: ${selectedOrder.id}`}
+          />
+
+          <DeleteOrderModal
+            show={showDeleteModal}
+            order={selectedOrder}
+            handleClose={() => setShowDeleteModal(false)}
+            handleDelete={handleDeleteOrder}
+          />
+        </>
+      )}
 
       <style>
         {`
@@ -244,6 +324,10 @@ export const AdminOrders: React.FC = () => {
           .table th {
             background: #f8f9fa;
             font-weight: 600;
+          }
+
+          tr:hover {
+            background-color: rgba(0,0,0,0.02);
           }
         `}
       </style>

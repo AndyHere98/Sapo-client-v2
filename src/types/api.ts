@@ -1,3 +1,4 @@
+// API Response Types
 export interface ApiError {
   apiPath: string;
   errorStatus: number;
@@ -6,106 +7,51 @@ export interface ApiError {
   errorData?: any;
 }
 
-export interface MenuItem {
-  id: string;
-  name: string;
-  price: number;
-  available: number;
-  description?: string;
-  imageUrl?: string;
+export interface SuccessfulResponse {
+  message: string;
+  timestamp: string;
 }
 
-export interface CartItem {
-  id: string;
-  name: string;
-  quantity: number;
-  price: number;
-}
-
+// Customer Types
 export interface CustomerInfo {
   customerName: string;
   customerPhone: string;
   customerEmail: string;
+  pcHostName?: string;
+  balance?: number;
 }
 
-export interface OrderItem extends CustomerInfo {
-  totalDishes?: number;
-  totalPrice?: number;
-  paymentMethod: string;
-  paymentType: string;
-  id?: string;
-  createdAt?: string;
-  updateAt?: number;
-  status: 'pending' | 'completed' | 'cancelled';
-  note?: string;
-  address?: string;
-  orderDetails: CartItem[];
-}
-
-export interface DailyOrderSummary {
-  dishName: string;
-  quantity: number | 0;
-  unitPrice: number | 0;
-  sumPrice: number | 0;
-}
-
-export interface TopCustomer extends CustomerInfo {
-  totalOrders: number;
-  totalDishes: number;
-  totalSpending: number;
-}
-
-export interface MonthlyOrderSummary {
-  totalSpending: number;
-  totalDish: number;
-  totalOrders: number;
-  month: string;
-  orderList: OrderItem[];
-  topCustomer: TopCustomer[];
-}
-
-export interface YearlyOrderSummary {
-  totalSpending: number;
-  totalDish: number;
-  totalOrders: number;
-  year: string;
-  monthlyOrderSummary: MonthlyOrderSummary[];
-}
-
-export interface OrderSummaryResponse {
-  todayOrders: OrderItem[];
-  dailyOrders: DailyOrderSummary[];
-  yearlyOrders: YearlyOrderSummary[];
-}
-
-export interface CustomerDetails {
-  name: string;
-  email: string;
-  phone: string;
-  // paymentType: 'MOMO' | 'CASH' | 'BANK';
-  paymentType: 'CASH' | 'CARD';
-  paymentMethod: 'POSTPAID' | 'PREPAID';
-}
-
-export interface Order {
+// Menu Types
+export interface MenuItem {
   id: string;
-  customerInfo: CustomerInfo;
-  items: CartItem[];
-  paymentType: string;
-  paymentRequest: string;
-  total: number;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
-  createdAt: string;
-  updatedAt: string;
+  name: string;
+  price: number;
+  description?: string;
+  imageUrl?: string;
+  available: number;
 }
 
-export interface SuccessfulResponse {
-  status: string;
-  message: string;
-  data?: object;
+// Order Types
+export interface OrderItem {
+  id?: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  orderDetails: CartItem[];
+  status?: 'pending' | 'completed' | 'cancelled';
+  totalPrice?: number;
+  createdAt?: string;
+  note?: string;
+  paymentMethod?: string;
+  paymentType?: string;
+  isPaid: boolean;
 }
 
-// Admin Interfaces
+export interface CartItem extends MenuItem {
+  quantity: number;
+}
+
+// Admin Summary Types
 export interface AdminOrderSummary {
   totalOrders: number;
   pendingOrders: number;
@@ -117,29 +63,27 @@ export interface AdminOrderSummary {
     totalAmount: number;
   }[];
   recentOrders: OrderItem[];
-  popularDishes: {
-    dishName: string;
-    orderCount: number;
-    totalRevenue: number;
-  }[];
 }
 
 export interface AdminCustomerSummary {
-  totalCustomers: number;
-  newCustomersToday: number;
-  customerStats: {
-    date: string;
-    newCustomers: number;
-    activeCustomers: number;
-  }[];
   topCustomers: TopCustomer[];
-  customerActivity: {
-    customerName: string;
-    lastOrderDate: string;
-    totalOrders: number;
-    totalSpent: number;
-  }[];
+  customerInfos: CustomerInfo[];
 }
+
+export interface TopCustomer {
+  customerName: string;
+  customerEmail: string;
+  totalOrders: number;
+  totalDishes: number;
+  totalSpending: number;
+}
+
+// export interface CustomerActivity {
+//   customerName: string;
+//   lastOrderDate: string;
+//   totalOrders: number;
+//   totalSpent: number;
+// }
 
 export interface AdminBillingSummary {
   totalRevenue: number;
