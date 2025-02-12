@@ -46,9 +46,9 @@ const OrderDetailsRow: React.FC<OrderDetailsRowProps> = ({ order }) => {
         <td>
           <Badge
             bg={
-              order.status === "completed"
+              order.status === config.orderCompleted
                 ? "success"
-                : order.status === "pending"
+                : order.status === config.orderCancelled
                 ? "warning"
                 : "danger"
             }
@@ -398,9 +398,9 @@ const TodayOrdersModal: React.FC<TodayOrdersModalProps> = ({
                       <td>
                         <Badge
                           bg={
-                            order.status === "completed"
+                            order.status === config.orderCompleted
                               ? "success"
-                              : order.status === "pending"
+                              : order.status === config.orderCancelled
                               ? "warning"
                               : "danger"
                           }

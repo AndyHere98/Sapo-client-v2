@@ -1,42 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Table, Badge, Form, Button } from 'react-bootstrap';
-import { adminService } from '../../services/api';
-import { AdminCustomerSummary, CustomerInfo, TopCustomer } from '../../types/api';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
-import { useToast } from '../../contexts/ToastContext';
-import { EmptyState } from '../../components/EmptyState';
-import { Users, Trophy, Save } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Card, Row, Col, Table, Badge, Form, Button } from "react-bootstrap";
+import { adminService } from "../../services/api";
+import {
+  AdminCustomerSummary,
+  CustomerInfo,
+  TopCustomer,
+} from "../../types/api";
+import { LoadingSpinner } from "../../components/LoadingSpinner";
+import { useToast } from "../../contexts/ToastContext";
+import { EmptyState } from "../../components/EmptyState";
+import { Users, Trophy, Save } from "lucide-react";
 
-const TopContributorCard: React.FC<{ contributor: TopCustomer; rank: number }> = ({ contributor, rank }) => {
+const TopContributorCard: React.FC<{
+  contributor: TopCustomer;
+  rank: number;
+}> = ({ contributor, rank }) => {
   const getTrophyColor = (rank: number) => {
     switch (rank) {
-      case 1: return "#FFD700"; // Gold
-      case 2: return "#C0C0C0"; // Silver
-      case 3: return "#CD7F32"; // Bronze
-      default: return "none";
+      case 1:
+        return "#FFD700"; // Gold
+      case 2:
+        return "#C0C0C0"; // Silver
+      case 3:
+        return "#CD7F32"; // Bronze
+      default:
+        return "none";
     }
   };
 
   const isTopThree = rank <= 3;
 
   return (
-    <Card className={`contributor-card ${isTopThree ? 'top-three' : ''}`}>
+    <Card className={`contributor-card ${isTopThree ? "top-three" : ""}`}>
       <Card.Body className="position-relative">
         {isTopThree && (
           <div className="position-absolute top-0 end-0 mt-2 me-2">
-            <Trophy size={24} fill={getTrophyColor(rank)} color={getTrophyColor(rank)} />
+            <Trophy
+              size={24}
+              fill={getTrophyColor(rank)}
+              color={getTrophyColor(rank)}
+            />
           </div>
         )}
-        <div className={`d-flex ${isTopThree ? 'flex-column align-items-center' : 'justify-content-between align-items-center'}`}>
-          <div className={`${isTopThree ? 'text-center mb-3' : ''}`}>
+        <div
+          className={`d-flex ${
+            isTopThree
+              ? "flex-column align-items-center"
+              : "justify-content-between align-items-center"
+          }`}
+        >
+          <div className={`${isTopThree ? "text-center mb-3" : ""}`}>
             <h5 className="mb-1">{contributor.customerName}</h5>
             <p className="text-muted mb-2">{contributor.totalOrders} orders</p>
           </div>
-          <div className={`${isTopThree ? 'text-center' : ''}`}>
+          <div className={`${isTopThree ? "text-center" : ""}`}>
             <h4 className="mb-0 text-primary">
-              {contributor.totalSpending.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ
+              {contributor.totalSpending
+                .toString()
+                .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
+              đ
             </h4>
-            <small className="text-muted">Số món đã đặt: {contributor.totalDishes}</small>
+            <small className="text-muted">
+              Số món đã đặt: {contributor.totalDishes}
+            </small>
           </div>
         </div>
       </Card.Body>
@@ -48,7 +74,9 @@ export const AdminCustomers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<AdminCustomerSummary | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<string | null>(null);
-  const [customerEdits, setCustomerEdits] = useState<{ [key: string]: CustomerInfo }>({});
+  const [customerEdits, setCustomerEdits] = useState<{
+    [key: string]: CustomerInfo;
+  }>({});
   const { showToast, handleApiError } = useToast();
 
   useEffect(() => {
@@ -67,17 +95,21 @@ export const AdminCustomers: React.FC = () => {
     }
   };
 
-  const handleCellEdit = (customerId: string, field: keyof CustomerInfo, value: string) => {
-    setCustomerEdits(prev => ({
+  const handleCellEdit = (
+    customerId: string,
+    field: keyof CustomerInfo,
+    value: string
+  ) => {
+    setCustomerEdits((prev) => ({
       ...prev,
       [customerId]: {
         ...(prev[customerId] || {
           customerName: customerEdits.customerName,
           customerPhone: customerEdits.customerPhone,
-          customerEmail: customerEdits.customerEmail
+          customerEmail: customerEdits.customerEmail,
         }),
-        [field]: value
-      }
+        [field]: value,
+      },
     }));
   };
 
@@ -85,9 +117,13 @@ export const AdminCustomers: React.FC = () => {
     try {
       setLoading(true);
       await adminService.updateCustomer(customerId, customerEdits[customerId]);
-      showToast('success', 'Cập nhật thông tin', 'Thông tin khách hàng đã được cập nhật thành công');
+      showToast(
+        "success",
+        "Cập nhật thông tin",
+        "Thông tin khách hàng đã được cập nhật thành công"
+      );
       setEditingCustomer(null);
-      setCustomerEdits(prev => {
+      setCustomerEdits((prev) => {
         const { [customerId]: _, ...rest } = prev;
         return rest;
       });
@@ -125,7 +161,10 @@ export const AdminCustomers: React.FC = () => {
           <Row className="g-4 mb-4">
             {summary.topCustomers.slice(0, 3).map((contributor, index) => (
               <Col key={contributor.customerEmail} md={4}>
-                <TopContributorCard contributor={contributor} rank={index + 1} />
+                <TopContributorCard
+                  contributor={contributor}
+                  rank={index + 1}
+                />
               </Col>
             ))}
           </Row>
@@ -151,7 +190,12 @@ export const AdminCustomers: React.FC = () => {
                         <td>{contributor.customerName}</td>
                         <td>{contributor.totalOrders}</td>
                         <td>{contributor.totalDishes}</td>
-                        <td>{contributor.totalSpending.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ</td>
+                        <td>
+                          {contributor.totalSpending
+                            .toString()
+                            .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
+                          đ
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -186,46 +230,86 @@ export const AdminCustomers: React.FC = () => {
 
                 return (
                   <tr key={customer.customerName}>
-                    <td onDoubleClick={() => setEditingCustomer(customer.customerName)}>
+                    <td
+                      onDoubleClick={() =>
+                        setEditingCustomer(customer.customerName)
+                      }
+                    >
                       {isEditing ? (
                         <Form.Control
                           type="text"
-                          value={editedCustomer?.customerName || customer.customerName}
-                          onChange={(e) => handleCellEdit(customer.customerName, 'customerName', e.target.value)}
+                          value={
+                            editedCustomer?.customerName ||
+                            customer.customerName
+                          }
+                          onChange={(e) =>
+                            handleCellEdit(
+                              customer.customerName,
+                              "customerName",
+                              e.target.value
+                            )
+                          }
                         />
                       ) : (
                         customer.customerName
                       )}
                     </td>
-                    <td onDoubleClick={() => setEditingCustomer(customer.customerName)}>
+                    <td
+                      onDoubleClick={() =>
+                        setEditingCustomer(customer.customerName)
+                      }
+                    >
                       {isEditing ? (
                         <Form.Control
                           type="text"
-                          value={editedCustomer?.customerPhone || ''}
-                          onChange={(e) => handleCellEdit(customer.customerName, 'customerPhone', e.target.value)}
+                          value={
+                            editedCustomer?.customerPhone ||
+                            customer.customerPhone
+                          }
+                          onChange={(e) =>
+                            handleCellEdit(
+                              customer.customerName,
+                              "customerPhone",
+                              e.target.value
+                            )
+                          }
                         />
                       ) : (
                         customer.customerPhone
                       )}
                     </td>
-                    <td onDoubleClick={() => setEditingCustomer(customer.customerName)}>
+                    <td
+                      onDoubleClick={() =>
+                        setEditingCustomer(customer.customerName)
+                      }
+                    >
                       {isEditing ? (
                         <Form.Control
                           type="email"
-                          value={editedCustomer?.customerEmail || ''}
-                          onChange={(e) => handleCellEdit(customer.customerName, 'customerEmail', e.target.value)}
+                          value={
+                            editedCustomer?.customerEmail ||
+                            customer.customerEmail
+                          }
+                          onChange={(e) =>
+                            handleCellEdit(
+                              customer.customerName,
+                              "customerEmail",
+                              e.target.value
+                            )
+                          }
                         />
                       ) : (
                         customer.customerEmail
                       )}
                     </td>
-                    <td>{customer.pcHostName || '-'}</td>
+                    <td>{customer.pcHostName || "-"}</td>
                     <td>
-                      <Badge bg={customer.balance ? 'warning' : 'success'}>
-                        {customer.balance ?
-                          `${customer.balance.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ` :
-                          'Đã thanh toán'
-                        }
+                      <Badge bg={customer.balance ? "warning" : "success"}>
+                        {customer.balance
+                          ? `${customer.balance
+                              .toString()
+                              .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ`
+                          : "Đã thanh toán"}
                       </Badge>
                     </td>
                     <td>
@@ -234,7 +318,9 @@ export const AdminCustomers: React.FC = () => {
                           <Button
                             variant="success"
                             size="sm"
-                            onClick={() => handleUpdateCustomer(customer.customerName)}
+                            onClick={() =>
+                              handleUpdateCustomer(customer.customerName)
+                            }
                             className="d-flex align-items-center gap-2"
                           >
                             <Save size={16} />
@@ -245,8 +331,9 @@ export const AdminCustomers: React.FC = () => {
                             size="sm"
                             onClick={() => {
                               setEditingCustomer(null);
-                              setCustomerEdits(prev => {
-                                const { [customer.customerName]: _, ...rest } = prev;
+                              setCustomerEdits((prev) => {
+                                const { [customer.customerName]: _, ...rest } =
+                                  prev;
                                 return rest;
                               });
                             }}

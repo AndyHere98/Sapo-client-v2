@@ -166,11 +166,11 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
     if (!order || !order.id) return;
 
     try {
-      await orderService.deleteOrder(order.id);
+      await orderService.cancelOrder(order.id);
       showToast(
         "success",
-        "Order Delete",
-        "Order has been successfully deleted!"
+        "Order Cancelled",
+        "Order has been successfully cancelled!"
       );
       fetchOrders();
     } catch (error) {
@@ -338,9 +338,9 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
                       <div className="d-flex justify-content-between align-items-center">
                         <Badge
                           bg={
-                            order.status === "completed"
+                            order.status === config.orderCompleted
                               ? "success"
-                              : order.status === "cancelled"
+                              : order.status === config.orderCancelled
                               ? "danger"
                               : "warning"
                           }

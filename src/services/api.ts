@@ -70,7 +70,7 @@ export const orderService = {
   },
 
   cancelOrder: async (orderId: string) => {
-    const response = await api.delete<void>(`/orders/${orderId}`);
+    const response = await api.put<void>(`/orders/delete/${orderId}`);
     return response;
   },
 
@@ -85,18 +85,21 @@ export const adminService = {
   // Orders
   getAdminOrderSummary: async () => {
     const response = await api.get<AdminOrderSummary>('/admin/orders/summary');
+    console.log('getAdminOrderSummary', response);
     return response;
   },
 
   // Customers
   getAdminCustomerSummary: async () => {
     const response = await api.get<AdminCustomerSummary>('/admin/customers/summary');
+    console.log('getAdminCustomerSummary', response);
     return response;
   },
 
   // Billing
   getAdminBillingSummary: async () => {
     const response = await api.get<AdminBillingSummary>('/admin/billing/summary');
+    console.log('getAdminBillingSummary', response);
     return response;
   },
 };

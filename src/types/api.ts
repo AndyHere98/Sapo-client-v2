@@ -38,7 +38,7 @@ export interface OrderItem {
   customerPhone: string;
   customerEmail: string;
   orderDetails: CartItem[];
-  status?: 'pending' | 'completed' | 'cancelled';
+  status?: 'P' | 'S' | 'C';
   totalPrice?: number;
   createdAt?: string;
   note?: string;
