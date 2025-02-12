@@ -95,15 +95,10 @@ export interface AdminBillingSummary {
     revenue: number;
     orderCount: number;
   }[];
-  paymentMethodStats: {
-    method: string;
-    count: number;
-    amount: number;
-  }[];
-  unpaidOrders: {
-    orderId: string;
-    customerName: string;
-    amount: number;
-    dueDate: string;
-  }[];
+  // paymentMethodStats: {
+  //   method: string;
+  //   count: number;
+  //   amount: number;
+  // }[];
+  unpaidOrders: OrderItem[];
 }

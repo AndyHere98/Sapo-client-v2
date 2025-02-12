@@ -47,11 +47,7 @@ const TopContributorCard: React.FC<{ contributor: TopCustomer; rank: number }> =
 export const AdminCustomers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<AdminCustomerSummary | null>(null);
-  const [editingCustomer, setEditingCustomer] = useState<CustomerInfo>({
-    customerName: '',
-    customerPhone: '',
-    customerEmail: ''
-  });
+  const [editingCustomer, setEditingCustomer] = useState<string | null>(null);
   const [customerEdits, setCustomerEdits] = useState<{ [key: string]: CustomerInfo }>({});
   const { showToast, handleApiError } = useToast();
 
@@ -75,7 +71,11 @@ export const AdminCustomers: React.FC = () => {
     setCustomerEdits(prev => ({
       ...prev,
       [customerId]: {
-        ...(prev[customerId] || {}),
+        ...(prev[customerId] || {
+          customerName: customerEdits.customerName,
+          customerPhone: customerEdits.customerPhone,
+          customerEmail: customerEdits.customerEmail
+        }),
         [field]: value
       }
     }));
@@ -100,7 +100,7 @@ export const AdminCustomers: React.FC = () => {
   };
 
   if (loading) return <LoadingSpinner centered />;
-  
+
   if (!summary) {
     return (
       <EmptyState
@@ -181,12 +181,12 @@ export const AdminCustomers: React.FC = () => {
             </thead>
             <tbody>
               {summary.customerInfos.map((customer) => {
-                const isEditing = editingCustomer.customerName === customer.customerName;
+                const isEditing = editingCustomer === customer.customerName;
                 const editedCustomer = customerEdits[customer.customerName];
 
                 return (
                   <tr key={customer.customerName}>
-                    <td onDoubleClick={() => setEditingCustomer()}>
+                    <td onDoubleClick={() => setEditingCustomer(customer.customerName)}>
                       {isEditing ? (
                         <Form.Control
                           type="text"
@@ -222,23 +222,38 @@ export const AdminCustomers: React.FC = () => {
                     <td>{customer.pcHostName || '-'}</td>
                     <td>
                       <Badge bg={customer.balance ? 'warning' : 'success'}>
-                        {customer.balance ? 
-                          `${customer.balance.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ` : 
+                        {customer.balance ?
+                          `${customer.balance.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ` :
                           'Đã thanh toán'
                         }
                       </Badge>
                     </td>
                     <td>
                       {isEditing && (
-                        <Button
-                          variant="success"
-                          size="sm"
-                          onClick={() => handleUpdateCustomer(customer.customerName)}
-                          className="d-flex align-items-center gap-2"
-                        >
-                          <Save size={16} />
-                          Cập nhật
-                        </Button>
+                        <div className="d-flex gap-2">
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={() => handleUpdateCustomer(customer.customerName)}
+                            className="d-flex align-items-center gap-2"
+                          >
+                            <Save size={16} />
+                            Cập nhật
+                          </Button>
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={() => {
+                              setEditingCustomer(null);
+                              setCustomerEdits(prev => {
+                                const { [customer.customerName]: _, ...rest } = prev;
+                                return rest;
+                              });
+                            }}
+                          >
+                            Huỷ
+                          </Button>
+                        </div>
                       )}
                     </td>
                   </tr>

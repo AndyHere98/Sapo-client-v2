@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, Row, Col, Table, Badge, Button, Form } from 'react-bootstrap';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { adminService, orderService } from '../../services/api';
-import { AdminOrderSummary, OrderItem } from '../../types/api';
+import { AdminOrderSummary, CartItem, OrderItem } from '../../types/api';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { MenuModal } from '../../components/MenuModal';
 import { OrderModal } from '../../components/OrderModal';
@@ -23,6 +23,8 @@ export const AdminOrders: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
+  const [orderTimeRange, setOrderTimeRange] = useState('month');
+  const [cart, setCart] = useState<CartItem[]>([]);
   const { showToast, handleApiError } = useToast();
 
   useEffect(() => {
@@ -154,27 +156,48 @@ export const AdminOrders: React.FC = () => {
       <Card className="mb-4">
         <Card.Header className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Thống kê đơn hàng</h5>
-          <Form.Select 
-            style={{ width: 'auto' }}
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-          >
-            <option value="week">Tuần này</option>
-            <option value="month">Tháng này</option>
-            <option value="year">Năm nay</option>
-          </Form.Select>
+          <div className="d-flex gap-3 align-items-center">
+            <Form.Select 
+              style={{ width: 'auto' }}
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value as TimeRange)}
+            >
+              <option value="week">Tuần này</option>
+              <option value="month">Tháng này</option>
+              <option value="year">Năm nay</option>
+            </Form.Select>
+          </div>
         </Card.Header>
         <Card.Body>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={getChartData()}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="orderCount" fill="#0d6efd" name="Số đơn" />
-              <Bar dataKey="totalAmount" fill="#198754" name="Doanh thu" />
-            </BarChart>
-          </ResponsiveContainer>
+        <ResponsiveContainer width="100%" height={300}>
+  <BarChart data={getChartData()}>
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis 
+      dataKey={timeRange === 'week' ? 'weekday' : timeRange === 'month' ? 'week' : 'month'} 
+      label={{ value: 'Thời gian', position: 'insideBottom', offset: -5 }}
+      tickFormatter={(value) => {
+        if (timeRange === 'week') return ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][value];
+        if (timeRange === 'month') return `Tuần ${value}`;
+        return ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 
+                'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'][value - 1];
+      }}
+    />
+    <YAxis 
+      yAxisId="left" 
+      orientation="left"
+      label={{ value: 'Doanh thu (VND)', angle: -90, position: 'insideLeft' }}
+    />
+    <YAxis 
+      yAxisId="right" 
+      orientation="right"
+      label={{ value: 'Số lượng', angle: 90, position: 'insideRight' }}
+    />
+    <Tooltip />
+    <Bar yAxisId="left" dataKey="totalAmount" fill="#0d6efd" name="Doanh thu" />
+    <Bar yAxisId="right" dataKey="orderCount" fill="#198754" name="Số đơn" />
+    <Bar yAxisId="right" dataKey="totalDishes" fill="#ffc107" name="Số món" />
+  </BarChart>
+</ResponsiveContainer>
         </Card.Body>
       </Card>
 
@@ -182,14 +205,25 @@ export const AdminOrders: React.FC = () => {
       <Card>
         <Card.Header className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Đơn hàng gần đây</h5>
-          <Button 
-            variant="primary"
-            className="d-flex align-items-center gap-2"
-            onClick={() => setShowPlaceOrder(true)}
-          >
-            <PlusCircle size={20} />
-            Tạo đơn hàng
-          </Button>
+          <div className="d-flex gap-3 align-items-center">
+            <Form.Select 
+              style={{ width: 'auto' }}
+              value={orderTimeRange}
+              onChange={(e) => setOrderTimeRange(e.target.value)}
+            >
+              <option value="month">Tháng này</option>
+              <option value="year">Năm nay</option>
+              <option value="all">Tất cả</option>
+            </Form.Select>
+            <Button 
+              variant="primary"
+              className="d-flex align-items-center gap-2"
+              onClick={() => setShowPlaceOrder(true)}
+            >
+              <PlusCircle size={20} />
+              Tạo đơn hàng
+            </Button>
+          </div>
         </Card.Header>
         <Card.Body className="p-0">
           <Table hover responsive>
@@ -276,9 +310,11 @@ export const AdminOrders: React.FC = () => {
           customerPhone: '',
           customerEmail: ''
         }}
-        cart={[]}
-        total={0}
+        cart={cart}
+        total={cart.reduce((sum, item) => sum + item.price * item.quantity, 0)}
         onSubmit={handlePlaceOrder}
+        showMenu={true}
+        onUpdateCart={setCart}
       />
 
       {selectedOrder && (

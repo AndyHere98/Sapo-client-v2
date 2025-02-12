@@ -1,40 +1,79 @@
-import React, { useState } from "react";
-import { Modal, Button, Form, Row, Col, Alert, Badge } from "react-bootstrap";
-import { CustomerDetails, CustomerInfo } from "../types/api";
-import { config } from "../config/config";
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Form, Row, Col, Alert, Badge, Table, Card } from 'react-bootstrap';
+import { CustomerInfo, MenuItem, CartItem } from '../types/api';
+import { menuService } from '../services/api';
+import { config } from '../config/config';
+import { LoadingSpinner } from './LoadingSpinner';
+import { PlusCircle, MinusCircle, Trash2 } from 'lucide-react';
 
 interface MenuModalProps {
   show: boolean;
   onHide: () => void;
   customerInfo: CustomerInfo;
-  cart: any[];
+  cart: CartItem[];
   total: number;
-  onSubmit: (orderExtraItem: object) => Promise<void>;
+  onSubmit: (orderData: any) => Promise<void>;
+  showMenu?: boolean;
+  onUpdateCart?: (cart: CartItem[]) => void;
 }
 
 export const MenuModal: React.FC<MenuModalProps> = ({
   show,
   onHide,
-  customerInfo,
+  customerInfo: initialCustomerInfo,
   cart,
   total,
   onSubmit,
+  showMenu = false,
+  onUpdateCart
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [customerInfo, setCustomerInfo] = useState(initialCustomerInfo);
   const [orderExtraItem, setOrderExtraItem] = useState({
     paymentMethod: "MOMO",
     paymentType: "PREPAID",
     orderNote: "",
   });
 
+  useEffect(() => {
+    if (showMenu) {
+      fetchMenu();
+    }
+  }, [showMenu]);
+
+  const fetchMenu = async () => {
+    try {
+      setLoading(true);
+      const response = await menuService.getMenu();
+      setMenuItems(response.data);
+    } catch (error) {
+      setError("Failed to load menu items");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
       setError(null);
-      await onSubmit(orderExtraItem);
+      
+      if (cart.length === 0) {
+        setError("Please select at least one item");
+        return;
+      }
+
+      const orderData = {
+        ...customerInfo,
+        ...orderExtraItem,
+        orderDetails: cart,
+        status: "pending",
+      };
+
+      await onSubmit(orderData);
       onHide();
     } catch (err) {
       setError("Failed to place order. Please try again.");
@@ -43,226 +82,275 @@ export const MenuModal: React.FC<MenuModalProps> = ({
     }
   };
 
+  const handleAddToCart = (item: MenuItem) => {
+    if (onUpdateCart) {
+      const updatedCart = [...cart];
+      const existingItem = updatedCart.find(i => i.id === item.id);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        updatedCart.push({ ...item, quantity: 1 });
+      }
+      onUpdateCart(updatedCart);
+    }
+  };
+
+  const handleUpdateQuantity = (itemId: string, delta: number) => {
+    if (onUpdateCart) {
+      const updatedCart = cart.map(item => {
+        if (item.id === itemId) {
+          const newQuantity = item.quantity + delta;
+          return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+        }
+        return item;
+      }).filter(Boolean) as CartItem[];
+      onUpdateCart(updatedCart);
+    }
+  };
+
+  const handleRemoveFromCart = (itemId: string) => {
+    if (onUpdateCart) {
+      const updatedCart = cart.filter(item => item.id !== itemId);
+      onUpdateCart(updatedCart);
+    }
+  };
+
   return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      size="lg"
-      className="fade menu-modal"
-      backdrop="static"
-      keyboard={false}
-    >
-      <Modal.Header closeButton className="border-0">
-        <Modal.Title className="h1">Hoàn tất đơn hàng</Modal.Title>
+    <Modal show={show} onHide={onHide} size="xl" className="fade menu-modal">
+      <Modal.Header closeButton>
+        <Modal.Title>Tạo đơn hàng mới</Modal.Title>
       </Modal.Header>
-      <Modal.Body className="px-4">
-        <div className="modal-content-wrapper p-3">
-          {error && (
-            <Alert variant="danger" className="mb-4">
-              {error}
-            </Alert>
-          )}
-
-          <Row>
-            <Col md={7}>
-              <div className="customer-info p-3 bg-light rounded">
-                <h5 className="mb-3">Thông tin khách hàng</h5>
-                <hr />
-                <dl className="row mb-0">
-                  <dt className="col-sm-5">Tên:</dt>
-                  <dd className="col-sm-7">{customerInfo.customerName}</dd>
-
-                  <dt className="col-sm-5">Email:</dt>
-                  <dd className="col-sm-7">{customerInfo.customerEmail}</dd>
-
-                  <dt className="col-sm-5">Số điện thoại:</dt>
-                  <dd className="col-sm-7">{customerInfo.customerPhone}</dd>
-                  <Form>
+      <Modal.Body>
+        {loading ? (
+          <LoadingSpinner centered />
+        ) : (
+          <Form onSubmit={handleSubmit}>
+            {error && <Alert variant="danger">{error}</Alert>}
+            
+            {/* Customer Information */}
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Thông tin khách hàng</h5>
+              </Card.Header>
+              <Card.Body>
+                <Row>
+                  <Col md={4}>
                     <Form.Group className="mb-3">
-                      <Form.Label>
-                        <strong>Loại hình thanh toán:</strong>
-                      </Form.Label>
+                      <Form.Label>Tên khách hàng</Form.Label>
+                      <Form.Control
+                        required
+                        type="text"
+                        value={customerInfo.customerName}
+                        onChange={(e) => setCustomerInfo(prev => ({
+                          ...prev,
+                          customerName: e.target.value
+                        }))}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Số điện thoại</Form.Label>
+                      <Form.Control
+                        required
+                        type="tel"
+                        value={customerInfo.customerPhone}
+                        onChange={(e) => setCustomerInfo(prev => ({
+                          ...prev,
+                          customerPhone: e.target.value
+                        }))}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Email</Form.Label>
+                      <Form.Control
+                        required
+                        type="email"
+                        value={customerInfo.customerEmail}
+                        onChange={(e) => setCustomerInfo(prev => ({
+                          ...prev,
+                          customerEmail: e.target.value
+                        }))}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+
+            {/* Menu Items */}
+            {showMenu && (
+              <Card className="mb-4">
+                <Card.Header>
+                  <h5 className="mb-0">Menu</h5>
+                </Card.Header>
+                <Card.Body>
+                  <Row xs={1} md={2} lg={3} className="g-4">
+                    {menuItems.map((item) => (
+                      <Col key={item.id}>
+                        <Card className="h-100 menu-item">
+                          <Card.Body>
+                            <h6>{item.name}</h6>
+                            <p className="text-muted mb-2">
+                              {item.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ
+                            </p>
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              onClick={() => handleAddToCart(item)}
+                              disabled={item.available === 0}
+                            >
+                              <PlusCircle size={16} className="me-2" />
+                              Thêm vào giỏ
+                            </Button>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                </Card.Body>
+              </Card>
+            )}
+
+            {/* Cart */}
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Giỏ hàng</h5>
+              </Card.Header>
+              <Card.Body className="p-0">
+                <Table hover className="mb-0">
+                  <thead>
+                    <tr>
+                      <th>Món ăn</th>
+                      <th>Đơn giá</th>
+                      <th style={{ width: '150px' }}>Số lượng</th>
+                      <th>Thành tiền</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cart.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.name}</td>
+                        <td>{item.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ</td>
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => handleUpdateQuantity(item.id, -1)}
+                            >
+                              <MinusCircle size={16} />
+                            </Button>
+                            <span className="mx-2">{item.quantity}</span>
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => handleUpdateQuantity(item.id, 1)}
+                            >
+                              <PlusCircle size={16} />
+                            </Button>
+                          </div>
+                        </td>
+                        <td>
+                          {(item.price * item.quantity)
+                            .toString()
+                            .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ
+                        </td>
+                        <td>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleRemoveFromCart(item.id)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                    {cart.length > 0 && (
+                      <tr>
+                        <td colSpan={3} className="text-end">
+                          <strong>Tổng cộng:</strong>
+                        </td>
+                        <td colSpan={2}>
+                          <strong>
+                            {total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ
+                          </strong>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table>
+              </Card.Body>
+            </Card>
+
+            {/* Order Extra Information */}
+            <Card>
+              <Card.Header>
+                <h5 className="mb-0">Thông tin thanh toán</h5>
+              </Card.Header>
+              <Card.Body>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Loại hình thanh toán</Form.Label>
                       <Form.Select
                         value={orderExtraItem.paymentType}
-                        onChange={(e) =>
-                          setOrderExtraItem((prev) => ({
-                            ...prev,
-                            paymentType: e.target.value as
-                              | "PREPAID"
-                              | "POSTPAID",
-                          }))
-                        }
+                        onChange={(e) => setOrderExtraItem(prev => ({
+                          ...prev,
+                          paymentType: e.target.value as "PREPAID" | "POSTPAID"
+                        }))}
                       >
                         <option value="PREPAID">Trả trước</option>
                         <option value="POSTPAID">Trả sau</option>
                       </Form.Select>
                     </Form.Group>
+                  </Col>
+                  <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>
-                        <strong>Hình thức thanh toán: </strong>
-                      </Form.Label>
+                      <Form.Label>Hình thức thanh toán</Form.Label>
                       <Form.Select
                         value={orderExtraItem.paymentMethod}
-                        onChange={(e) =>
-                          setOrderExtraItem((prev) => ({
-                            ...prev,
-                            paymentMethod: e.target.value as
-                              | "CASH"
-                              | "MOMO"
-                              | "BANK",
-                          }))
-                        }
+                        onChange={(e) => setOrderExtraItem(prev => ({
+                          ...prev,
+                          paymentMethod: e.target.value as "CASH" | "MOMO" | "BANK"
+                        }))}
                       >
                         <option value="MOMO">Momo</option>
                         <option value="CASH">Tiền mặt</option>
                         <option value="BANK">Chuyển khoản ngân hàng</option>
                       </Form.Select>
                     </Form.Group>
-                    <Form.Group className="mb-3">
-                      <Form.Label>
-                        <strong>Ghi chú:</strong>
-                      </Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={3}
-                        placeholder="Ghi chú..."
-                        value={orderExtraItem.orderNote}
-                        onChange={(e) => {
-                          setOrderExtraItem((prev) => ({
-                            ...prev,
-                            orderNote: e.target.value,
-                          }));
-                        }}
-                      />
-                    </Form.Group>
-                  </Form>
-                </dl>
-              </div>
-            </Col>
-            <Col lg={5}>
-              <div className="order-summary p-3">
-                <h5 className="mb-3">Đơn hàng</h5>
-                <hr />
-                <div className="order-items">
-                  {cart.map((item, index) => (
-                    <div key={index} className="order-item">
-                      <div className="d-flex justify-content-between mb-2">
-                        <span>{item.name}</span>
-                        <span>x{item.quantity}</span>
-                      </div>
-                      <div className="d-flex justify-content-between text-muted">
-                        <small>
-                          <strong>
-                            {item.price
-                              .toString()
-                              .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                          </strong>
-                          {" đ"}
-                          {"/món"}
-                        </small>
-                        <Badge>
-                          {(item.price * item.quantity)
-                            .toString()
-                            .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
-                          {config.currency}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <hr />
-                <div className="d-flex justify-content-between align-items-center">
-                  <strong>Tổng đơn</strong>
-                  <h5 className="mb-0">
-                    {total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
-                    {config.currency}
-                  </h5>
-                </div>
-              </div>
-            </Col>
-          </Row>
-        </div>
+                  </Col>
+                </Row>
+                <Form.Group>
+                  <Form.Label>Ghi chú</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    value={orderExtraItem.orderNote}
+                    onChange={(e) => setOrderExtraItem(prev => ({
+                      ...prev,
+                      orderNote: e.target.value
+                    }))}
+                  />
+                </Form.Group>
+              </Card.Body>
+            </Card>
+          </Form>
+        )}
       </Modal.Body>
-      <Modal.Footer className="border-0">
-        <Button variant="outline-secondary" onClick={onHide}>
-          Đóng
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onHide}>
+          Huỷ
         </Button>
-        <Button variant="primary" onClick={handleSubmit} disabled={loading}>
-          {loading ? "Đang đặt đơn..." : "Đặt đơn"}
+        <Button variant="primary" onClick={handleSubmit} disabled={loading || cart.length === 0}>
+          {loading ? "Đang xử lý..." : "Tạo đơn hàng"}
         </Button>
       </Modal.Footer>
-
-      <style>
-        {`
-          .menu-modal .modal-content {
-            border-radius: 1rem;
-            border: none;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-          }
-
-          .menu-modal .modal-header {
-            padding: 1.5rem 1.5rem 1rem;
-          }
-
-          .menu-modal .modal-footer {
-            padding: 1rem 1.5rem 1.5rem;
-          }
-
-          .order-summary {
-            background: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            height: 100%;
-          }
-
-          .order-items {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 1rem;
-          }
-
-          .order-item {
-            padding: 0.75rem;
-            background: white;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-          }
-
-          .order-item:last-child {
-            margin-bottom: 0;
-          }
-
-          .modal-content-wrapper {
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
-            padding-right: 0.5rem;
-          }
-
-          .modal-content-wrapper::-webkit-scrollbar {
-            width: 6px;
-          }
-
-          .modal-content-wrapper::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-          }
-
-          .modal-content-wrapper::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 3px;
-          }
-
-          .modal-content-wrapper::-webkit-scrollbar-thumb:hover {
-            background: #555;
-          }
-
-          @media (max-width: 992px) {
-            .order-summary {
-              margin-top: 2rem;
-            }
-          }
-        `}
-      </style>
     </Modal>
   );
 };

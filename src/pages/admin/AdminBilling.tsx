@@ -115,98 +115,37 @@ export const AdminBilling: React.FC = () => {
         </Card.Body>
       </Card>
 
-      <Row className="g-4">
-        {/* Payment Methods */}
-        <Col lg={6}>
-          <Card>
-            <Card.Header>
-              <h5 className="mb-0">Phương thức thanh toán</h5>
-            </Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={6}>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={summary.paymentMethodStats}
-                        dataKey="amount"
-                        nameKey="method"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        label
-                      >
-                        {summary.paymentMethodStats.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </Col>
-                <Col md={6}>
-                  <Table>
-                    <thead>
-                      <tr>
-                        <th>Phương thức</th>
-                        <th>Số lượng</th>
-                        <th>Tổng tiền</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {summary.paymentMethodStats.map((method, index) => (
-                        <tr key={index}>
-                          <td>{method.method}</td>
-                          <td>{method.count}</td>
-                          <td>{method.amount.toLocaleString()} đ</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        {/* Unpaid Orders */}
-        <Col lg={6}>
-          <Card>
-            <Card.Header>
-              <h5 className="mb-0">Đơn chưa thanh toán</h5>
-            </Card.Header>
-            <Card.Body className="p-0">
-              <Table hover>
-                <thead>
-                  <tr>
-                    <th>Mã đơn</th>
-                    <th>Khách hàng</th>
-                    <th>Số tiền</th>
-                    <th>Hạn thanh toán</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.unpaidOrders.map((order, index) => (
-                    <tr key={index}>
-                      <td>{order.orderId}</td>
-                      <td>{order.customerName}</td>
-                      <td>{order.amount.toLocaleString()} đ</td>
-                      <td>
-                        <Badge bg="warning">
-                          {new Date(order.dueDate).toLocaleDateString()}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+      <Card className="mt-4">
+        <Card.Header>
+          <h5 className="mb-0">Đơn chưa thanh toán</h5>
+        </Card.Header>
+        <Card.Body className="p-0">
+          <Table hover>
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Số tiền</th>
+                <th>Hạn thanh toán</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summary.unpaidOrders.map((order, index) => (
+                <tr key={index}>
+                  <td>{order.id}</td>
+                  <td>{order.customerName}</td>
+                  <td>{(order.totalPrice ? order.totalPrice : 0).toLocaleString()} đ</td>
+                  <td>
+                    <Badge bg="warning">
+                      {new Date(order.createdAt ? order.createdAt : '').toLocaleDateString()}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
 
       <style>
         {`
