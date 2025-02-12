@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { config } from '../config/config';
-import { ApiError, CustomerInfo, MenuItem, Order, OrderItem, OrderSummaryResponse, SuccessfulResponse } from '../types/api';
+import { AdminBillingSummary, AdminCustomerSummary, AdminOrderSummary, ApiError, CustomerInfo, MenuItem, Order, OrderItem, OrderSummaryResponse, SuccessfulResponse } from '../types/api';
 
 const api = axios.create({
   baseURL: config.baseApiUrl,
@@ -64,6 +64,11 @@ export const orderService = {
     return response;
   },
 
+  deleteOrder: async (orderId: string) => {
+    const response = await api.delete<void>(`/orders/${orderId}`);
+    return response;
+  },
+
   cancelOrder: async (orderId: string) => {
     const response = await api.delete<void>(`/orders/${orderId}`);
     return response;
@@ -71,6 +76,27 @@ export const orderService = {
 
   getSummary: async () => {
     const response = await api.get<OrderSummaryResponse>('/orders/summary');
+    return response;
+  },
+};
+
+  // Admin Service
+export const adminService = {
+  // Orders
+  getAdminOrderSummary: async () => {
+    const response = await api.get<AdminOrderSummary>('/admin/orders/summary');
+    return response;
+  },
+
+  // Customers
+  getAdminCustomerSummary: async () => {
+    const response = await api.get<AdminCustomerSummary>('/admin/customers/summary');
+    return response;
+  },
+
+  // Billing
+  getAdminBillingSummary: async () => {
+    const response = await api.get<AdminBillingSummary>('/admin/billing/summary');
     return response;
   },
 };

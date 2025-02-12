@@ -1,233 +1,356 @@
-import React, { useState } from 'react';
-import { Modal, Button, Form, Row, Col, Alert } from 'react-bootstrap';
-import { CustomerDetails, CustomerInfo } from '../types/api';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Form, Row, Col, Alert, Badge, Table, Card } from 'react-bootstrap';
+import { CustomerInfo, MenuItem, CartItem } from '../types/api';
+import { menuService } from '../services/api';
 import { config } from '../config/config';
+import { LoadingSpinner } from './LoadingSpinner';
+import { PlusCircle, MinusCircle, Trash2 } from 'lucide-react';
 
 interface MenuModalProps {
   show: boolean;
   onHide: () => void;
   customerInfo: CustomerInfo;
-  cart: any[];
+  cart: CartItem[];
   total: number;
-  onSubmit: (paymentType: string, paymentMethod: string) => Promise<void>;
+  onSubmit: (orderData: any) => Promise<void>;
+  showMenu?: boolean;
+  onUpdateCart?: (cart: CartItem[]) => void;
 }
 
 export const MenuModal: React.FC<MenuModalProps> = ({
   show,
   onHide,
-  customerInfo,
+  customerInfo: initialCustomerInfo,
   cart,
   total,
   onSubmit,
+  showMenu = false,
+  onUpdateCart
 }) => {
   const [loading, setLoading] = useState(false);
-  // const [customerDetails, setCustomerDetails] = useState<CustomerDetails>({
-  //   name: '',
-  //   email: '',
-  //   phone: '',
-  //   paymentType: 'CASH',
-  //   paymentMethod: 'POSTPAID',
-  // });
   const [error, setError] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'PREPAID' | 'POSTPAID'>('PREPAID');
-  const [paymentType, setPaymentType] = useState<'CASH' | 'MOMO' | 'BANK'>('MOMO');
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [customerInfo, setCustomerInfo] = useState(initialCustomerInfo);
+  const [orderExtraItem, setOrderExtraItem] = useState({
+    paymentMethod: "MOMO",
+    paymentType: "PREPAID",
+    orderNote: "",
+  });
+
+  useEffect(() => {
+    if (showMenu) {
+      fetchMenu();
+    }
+  }, [showMenu]);
+
+  const fetchMenu = async () => {
+    try {
+      setLoading(true);
+      const response = await menuService.getMenu();
+      setMenuItems(response.data);
+    } catch (error) {
+      setError("Failed to load menu items");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setLoading(true);
       setError(null);
-      await onSubmit(paymentType, paymentMethod);
+      
+      if (cart.length === 0) {
+        setError("Please select at least one item");
+        return;
+      }
+
+      const orderData = {
+        ...customerInfo,
+        ...orderExtraItem,
+        orderDetails: cart,
+        status: "pending",
+      };
+
+      await onSubmit(orderData);
       onHide();
     } catch (err) {
-      setError('Failed to place order. Please try again.');
+      setError("Failed to place order. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <Modal
-      show={show}
-      onHide={onHide}
-      size="lg"
-      className="fade menu-modal"
-      backdrop="static"
-      keyboard={false}
-    >
-      <Modal.Header closeButton className="border-0">
-        <Modal.Title className="h5">Complete Your Order</Modal.Title>
-      </Modal.Header>
-      <Modal.Body className="px-4">
-        <div className="modal-content-wrapper">
-          {error && (
-            <Alert variant="danger" className="mb-4">
-              {error}
-            </Alert>
-          )}
+  const handleAddToCart = (item: MenuItem) => {
+    if (onUpdateCart) {
+      const updatedCart = [...cart];
+      const existingItem = updatedCart.find(i => i.id === item.id);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        updatedCart.push({ ...item, quantity: 1 });
+      }
+      onUpdateCart(updatedCart);
+    }
+  };
 
-          <Row>
-            <Col lg={7}>
-              <Form onSubmit={handleSubmit}>
-                <h6 className="mb-3">Customer Information</h6>
-                <Form.Group className="mb-3">
-                  <Form.Label>Name</Form.Label>
+  const handleUpdateQuantity = (itemId: string, delta: number) => {
+    if (onUpdateCart) {
+      const updatedCart = cart.map(item => {
+        if (item.id === itemId) {
+          const newQuantity = item.quantity + delta;
+          return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+        }
+        return item;
+      }).filter(Boolean) as CartItem[];
+      onUpdateCart(updatedCart);
+    }
+  };
+
+  const handleRemoveFromCart = (itemId: string) => {
+    if (onUpdateCart) {
+      const updatedCart = cart.filter(item => item.id !== itemId);
+      onUpdateCart(updatedCart);
+    }
+  };
+
+  return (
+    <Modal show={show} onHide={onHide} size="xl" className="fade menu-modal">
+      <Modal.Header closeButton>
+        <Modal.Title>Tạo đơn hàng mới</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {loading ? (
+          <LoadingSpinner centered />
+        ) : (
+          <Form onSubmit={handleSubmit}>
+            {error && <Alert variant="danger">{error}</Alert>}
+            
+            {/* Customer Information */}
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Thông tin khách hàng</h5>
+              </Card.Header>
+              <Card.Body>
+                <Row>
+                  <Col md={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Tên khách hàng</Form.Label>
+                      <Form.Control
+                        required
+                        type="text"
+                        value={customerInfo.customerName}
+                        onChange={(e) => setCustomerInfo(prev => ({
+                          ...prev,
+                          customerName: e.target.value
+                        }))}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Số điện thoại</Form.Label>
+                      <Form.Control
+                        required
+                        type="tel"
+                        value={customerInfo.customerPhone}
+                        onChange={(e) => setCustomerInfo(prev => ({
+                          ...prev,
+                          customerPhone: e.target.value
+                        }))}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Email</Form.Label>
+                      <Form.Control
+                        required
+                        type="email"
+                        value={customerInfo.customerEmail}
+                        onChange={(e) => setCustomerInfo(prev => ({
+                          ...prev,
+                          customerEmail: e.target.value
+                        }))}
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+
+            {/* Menu Items */}
+            {showMenu && (
+              <Card className="mb-4">
+                <Card.Header>
+                  <h5 className="mb-0">Menu</h5>
+                </Card.Header>
+                <Card.Body>
+                  <Row xs={1} md={2} lg={3} className="g-4">
+                    {menuItems.map((item) => (
+                      <Col key={item.id}>
+                        <Card className="h-100 menu-item">
+                          <Card.Body>
+                            <h6>{item.name}</h6>
+                            <p className="text-muted mb-2">
+                              {item.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ
+                            </p>
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              onClick={() => handleAddToCart(item)}
+                              disabled={item.available === 0}
+                            >
+                              <PlusCircle size={16} className="me-2" />
+                              Thêm vào giỏ
+                            </Button>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                </Card.Body>
+              </Card>
+            )}
+
+            {/* Cart */}
+            <Card className="mb-4">
+              <Card.Header>
+                <h5 className="mb-0">Giỏ hàng</h5>
+              </Card.Header>
+              <Card.Body className="p-0">
+                <Table hover className="mb-0">
+                  <thead>
+                    <tr>
+                      <th>Món ăn</th>
+                      <th>Đơn giá</th>
+                      <th style={{ width: '150px' }}>Số lượng</th>
+                      <th>Thành tiền</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cart.map((item) => (
+                      <tr key={item.id}>
+                        <td>{item.name}</td>
+                        <td>{item.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ</td>
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => handleUpdateQuantity(item.id, -1)}
+                            >
+                              <MinusCircle size={16} />
+                            </Button>
+                            <span className="mx-2">{item.quantity}</span>
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => handleUpdateQuantity(item.id, 1)}
+                            >
+                              <PlusCircle size={16} />
+                            </Button>
+                          </div>
+                        </td>
+                        <td>
+                          {(item.price * item.quantity)
+                            .toString()
+                            .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ
+                        </td>
+                        <td>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleRemoveFromCart(item.id)}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                    {cart.length > 0 && (
+                      <tr>
+                        <td colSpan={3} className="text-end">
+                          <strong>Tổng cộng:</strong>
+                        </td>
+                        <td colSpan={2}>
+                          <strong>
+                            {total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ
+                          </strong>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </Table>
+              </Card.Body>
+            </Card>
+
+            {/* Order Extra Information */}
+            <Card>
+              <Card.Header>
+                <h5 className="mb-0">Thông tin thanh toán</h5>
+              </Card.Header>
+              <Card.Body>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Loại hình thanh toán</Form.Label>
+                      <Form.Select
+                        value={orderExtraItem.paymentType}
+                        onChange={(e) => setOrderExtraItem(prev => ({
+                          ...prev,
+                          paymentType: e.target.value as "PREPAID" | "POSTPAID"
+                        }))}
+                      >
+                        <option value="PREPAID">Trả trước</option>
+                        <option value="POSTPAID">Trả sau</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Hình thức thanh toán</Form.Label>
+                      <Form.Select
+                        value={orderExtraItem.paymentMethod}
+                        onChange={(e) => setOrderExtraItem(prev => ({
+                          ...prev,
+                          paymentMethod: e.target.value as "CASH" | "MOMO" | "BANK"
+                        }))}
+                      >
+                        <option value="MOMO">Momo</option>
+                        <option value="CASH">Tiền mặt</option>
+                        <option value="BANK">Chuyển khoản ngân hàng</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Form.Group>
+                  <Form.Label>Ghi chú</Form.Label>
                   <Form.Control
-                    type="text"
-                    required
-                    value={customerInfo.customerName}
+                    as="textarea"
+                    rows={3}
+                    value={orderExtraItem.orderNote}
+                    onChange={(e) => setOrderExtraItem(prev => ({
+                      ...prev,
+                      orderNote: e.target.value
+                    }))}
                   />
                 </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Email</Form.Label>
-                  <Form.Control
-                    type="email"
-                    required
-                    value={customerInfo.customerEmail}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Phone</Form.Label>
-                  <Form.Control
-                    type="tel"
-                    required
-                    value={customerInfo.customerPhone}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Payment Type</Form.Label>
-                  <Form.Select
-                    value={paymentType}
-                    onChange={e => setPaymentType(e.target.value as 'CASH' | 'MOMO' | 'BANK')}
-                  >
-                    <option value="MOMO">Momo</option>
-                    <option value="CASH">Cash</option>
-                    <option value="BANK">Bank</option>
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Payment Method</Form.Label>
-                  <Form.Select
-                    value={paymentMethod}
-                    onChange={e => setPaymentMethod(e.target.value as 'PREPAID' | 'POSTPAID')}
-                  >
-                    <option value="POSTPAID">Pay on Delivery</option>
-                    <option value="PREPAID">Pay Now</option>
-                  </Form.Select>
-                </Form.Group>
-              </Form>
-            </Col>
-            <Col lg={5}>
-              <div className="order-summary">
-                <h6 className="mb-3">Order Summary</h6>
-                <div className="order-items">
-                  {cart.map((item, index) => (
-                    <div key={index} className="order-item">
-                      <div className="d-flex justify-content-between mb-2">
-                        <span>{item.name}</span>
-                        <span>x{item.quantity}</span>
-                      </div>
-                      <div className="d-flex justify-content-between text-muted">
-                        <small>{config.currency} {item.price.toFixed(2)} each</small>
-                        <small>{config.currency} {(item.price * item.quantity).toFixed(2)}</small>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <hr />
-                <div className="d-flex justify-content-between align-items-center">
-                  <strong>Total Amount</strong>
-                  <h5 className="mb-0">{config.currency} {total.toFixed(2)}</h5>
-                </div>
-              </div>
-            </Col>
-          </Row>
-        </div>
+              </Card.Body>
+            </Card>
+          </Form>
+        )}
       </Modal.Body>
-      <Modal.Footer className="border-0">
-        <Button variant="outline-secondary" onClick={onHide}>
-          Cancel
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onHide}>
+          Huỷ
         </Button>
-        <Button
-          variant="primary"
-          onClick={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? 'Placing Order...' : 'Place Order'}
+        <Button variant="primary" onClick={handleSubmit} disabled={loading || cart.length === 0}>
+          {loading ? "Đang xử lý..." : "Tạo đơn hàng"}
         </Button>
       </Modal.Footer>
-
-      <style>
-        {`
-          .menu-modal .modal-content {
-            border-radius: 1rem;
-            border: none;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-          }
-
-          .menu-modal .modal-header {
-            padding: 1.5rem 1.5rem 1rem;
-          }
-
-          .menu-modal .modal-footer {
-            padding: 1rem 1.5rem 1.5rem;
-          }
-
-          .order-summary {
-            background: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            height: 100%;
-          }
-
-          .order-items {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 1rem;
-          }
-
-          .order-item {
-            padding: 0.75rem;
-            background: white;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-          }
-
-          .order-item:last-child {
-            margin-bottom: 0;
-          }
-
-          .modal-content-wrapper {
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
-            padding-right: 0.5rem;
-          }
-
-          .modal-content-wrapper::-webkit-scrollbar {
-            width: 6px;
-          }
-
-          .modal-content-wrapper::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-          }
-
-          .modal-content-wrapper::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 3px;
-          }
-
-          .modal-content-wrapper::-webkit-scrollbar-thumb:hover {
-            background: #555;
-          }
-
-          @media (max-width: 992px) {
-            .order-summary {
-              margin-top: 2rem;
-            }
-          }
-        `}
-      </style>
     </Modal>
   );
 };
