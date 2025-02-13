@@ -17,6 +17,7 @@ export interface CustomerInfo {
   customerName: string;
   customerPhone: string;
   customerEmail: string;
+  ipAddress?: string;
   pcHostName?: string;
   balance?: number;
 }

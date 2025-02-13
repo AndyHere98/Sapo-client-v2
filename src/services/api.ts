@@ -89,10 +89,28 @@ export const adminService = {
     return response;
   },
 
+  confirmPaymentOrder: async (orderId: string) => {
+    const response = await api.put<Promise<SuccessfulResponse | ApiError>>(`/admin/orders/confirm/${orderId}`);
+    return response;
+  },
+
+  completeOrder: async (orderId: string) => {
+    const response = await api.put<Promise<SuccessfulResponse | ApiError>>(`/admin/orders/complete/${orderId}`);
+    return response;
+  },
+
   // Customers
   getAdminCustomerSummary: async () => {
     const response = await api.get<AdminCustomerSummary>('/admin/customers/summary');
     console.log('getAdminCustomerSummary', response);
+    return response;
+  },
+
+  updateCustomer: async (ipAddress: string, customerInfo: Partial<CustomerInfo>) => {
+    console.log('updateCustomer request', customerInfo);
+    
+    const response = await api.put<Promise<SuccessfulResponse | ApiError>>(`/admin/customers/${ipAddress}`, customerInfo);
+    console.log('updateCustomer', response);
     return response;
   },
 
