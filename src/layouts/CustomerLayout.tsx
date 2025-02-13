@@ -1,13 +1,25 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { Container } from "react-bootstrap";
 import { Header } from "../components/Header";
 import { motion } from "framer-motion";
+import { CustomerInfo } from "../types/api";
 
-export const CustomerLayout: React.FC = () => {
+interface CustomerLayoutProps {
+  customerInfo: CustomerInfo;
+  onGetCustomerInfo: () => void;
+}
+
+export const CustomerLayout: React.FC<CustomerLayoutProps> = ({
+  customerInfo,
+  onGetCustomerInfo,
+}) => {
   return (
     <>
-      <Header />
+      <Header
+        customerInfo={customerInfo}
+        onGetCustomerInfo={onGetCustomerInfo}
+      />
       <Container>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Card, Row, Col, Table, Badge, Button, Form, Pagination } from "react-bootstrap";
+import {
+  Card,
+  Row,
+  Col,
+  Table,
+  Badge,
+  Button,
+  Form,
+  Pagination,
+  OverlayTrigger,
+  Tooltip,
+} from "react-bootstrap";
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
 } from "recharts";
 import { adminService, orderService } from "../../services/api";
@@ -15,14 +25,24 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { MenuModal } from "../../components/MenuModal";
 import { OrderModal } from "../../components/OrderModal";
 import DeleteOrderModal from "../../components/DeleteOrderModal";
-import { PlusCircle, Edit2, Trash2, LayoutDashboard, DollarSign } from "lucide-react";
+import {
+  PlusCircle,
+  Edit2,
+  Trash2,
+  LayoutDashboard,
+  DollarSign,
+} from "lucide-react";
 import { useToast } from "../../contexts/ToastContext";
 import { EmptyState } from "../../components/EmptyState";
 import { format, parse, isBefore } from "date-fns";
 import { config } from "../../config/config";
-import { MdOutlineCancel, MdOutlinePaid, MdOutlinePendingActions, MdPaid } from "react-icons/md";
+import {
+  MdOutlineCancel,
+  MdOutlinePaid,
+  MdOutlinePendingActions,
+  MdPaid,
+} from "react-icons/md";
 import { AiOutlineFileDone } from "react-icons/ai";
-import ConfirmPaymentModal from "../../components/ConfirmPaymentModal";
 import { BsFillBagCheckFill } from "react-icons/bs";
 import CustomInformationModal from "../../components/CustomInformationModal";
 
@@ -42,10 +62,15 @@ export const AdminOrders: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const { showToast, handleApiError } = useToast();
 
-  const [customModalTitle, setCustomModalTitle] = useState('');
-  const [customModalTitleBg, setCustomModalTitleBg] = useState('');
-  const [customModalInformation, setCustomModalInformation] = useState('');
-  const [customModalAction, setCustomModalAction] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState("");
+
+  const [showCustomModal, setShowCustomModal] = useState(false);
+  const [customModal, setCustomModal] = useState({
+    title: "",
+    titleBg: "",
+    information: "",
+    action: "",
+  });
 
   const [recentOrders, setRecentOrders] = useState<OrderItem[]>([]);
 
@@ -65,30 +90,76 @@ export const AdminOrders: React.FC = () => {
 
   useEffect(() => {
     handleShowCustomModal();
-  }, [showCompleteOrderModal]);
+  }, [
+    showCompleteOrderModal === true,
+    showConfirmPaidModal === true,
+    showDeleteModal === true,
+  ]);
 
   const handleShowCustomModal = () => {
+    if (!showCompleteOrderModal && !showConfirmPaidModal && !showDeleteModal)
+      return;
     if (showCompleteOrderModal) {
-      setCustomModalTitle('Hoàn tất đơn hàng')
-      setCustomModalTitleBg('success')
-      setCustomModalAction('Hoàn tất')
-      setCustomModalInformation(`Xác nhận đơn hàng ${selectedOrder?.id} đã hoàn tất?` )
+      setCustomModal(() => ({
+        title: "Hoàn tất đơn hàng",
+        titleBg: "success",
+        action: "Hoàn tất",
+        information: `Xác nhận đơn hàng ${selectedOrder?.id} đã hoàn tất?`,
+      }));
+    } else if (showConfirmPaidModal) {
+      setCustomModal((prev) => ({
+        title: "Xác nhận thanh toán",
+        titleBg: "success",
+        action: "Hoàn tất",
+        information: `Xác nhận đơn hàng ${selectedOrder?.id} đã thanh toán?`,
+      }));
+    } else if (showDeleteModal) {
+      setCustomModal((prev) => ({
+        title: "Huỷ đơn hàng",
+        titleBg: "danger",
+        action: "Xác nhận huỷ",
+        information: `Đơn hàng ${selectedOrder?.id} sẽ được huỷ, bạn chắc chứ?`,
+      }));
     }
-  }
+    setShowCustomModal(true);
+  };
 
   const handleCustomModalAction = async () => {
+    if (!selectedOrder?.id) return;
     if (showCompleteOrderModal) {
-      if (!selectedOrder?.id) return;
       try {
         await adminService.completeOrder(selectedOrder.id);
         showToast("success", "Xác nhận đơn hàng", "Đơn hàng đã hoàn tất");
-        fetchOrderSummary();
         setShowCompleteOrderModal(false);
       } catch (error) {
         handleApiError(error);
       }
+    } else if (showConfirmPaidModal) {
+      try {
+        await adminService.confirmPaymentOrder(selectedOrder.id);
+        showToast("success", "Xác nhận đơn hàng", "Đơn hàng đã thanh toán");
+        setShowConfirmPaidModal(false);
+      } catch (error) {
+        handleApiError(error);
+      }
+    } else if (showDeleteModal) {
+      try {
+        await orderService.cancelOrder(selectedOrder.id);
+        showToast("success", "Xác nhận đơn hàng", "Đơn hàng đã huỷ thành công");
+        setShowDeleteModal(false);
+      } catch (error) {
+        handleApiError(error);
+      }
     }
-  }
+    setCustomModal(() => ({
+      title: "",
+      titleBg: "",
+      information: "",
+      action: "",
+    }));
+    fetchOrderSummary();
+    setShowCustomModal(false);
+  };
 
   const fetchOrderSummary = async () => {
     try {
@@ -107,6 +178,10 @@ export const AdminOrders: React.FC = () => {
   };
 
   const paginatedOrders = recentOrders
+    .filter((order) =>
+      orderStatusFilter ? order.status === orderStatusFilter : order
+    )
+    .sort((a: OrderItem, b: OrderItem) => b.createdAt - a.createdAt)
     .slice(
       (pagination.currentPage - 1) * pagination.itemsPerPage,
       pagination.currentPage * pagination.itemsPerPage
@@ -150,29 +225,33 @@ export const AdminOrders: React.FC = () => {
     }
   };
 
-  const handleDeleteOrder = async () => {
-    if (!selectedOrder?.id) return;
-    try {
-      await orderService.deleteOrder(selectedOrder.id);
-      showToast("success", "Xoá đơn hàng", "Đơn hàng đã được xoá thành công");
-      fetchOrderSummary();
-      setShowDeleteModal(false);
-    } catch (error) {
-      handleApiError(error);
-    }
-  };
+  // const handleDeleteOrder = async () => {
+  //   if (!selectedOrder?.id) return;
+  //   try {
+  //     await orderService.deleteOrder(selectedOrder.id);
+  //     showToast("success", "Xoá đơn hàng", "Đơn hàng đã được xoá thành công");
+  //     fetchOrderSummary();
+  //     setShowDeleteModal(false);
+  //   } catch (error) {
+  //     handleApiError(error);
+  //   }
+  // };
 
-  const handleConfirmOrder = async () => {
-    if (!selectedOrder?.id) return;
-    try {
-      await adminService.confirmPaymentOrder(selectedOrder.id);
-      showToast("success", "Thanh toán đơn hàng", "Đơn hàng đã được thanh toán thành công");
-      fetchOrderSummary();
-      setShowConfirmPaidModal(false);
-    } catch (error) {
-      handleApiError(error);
-    }
-  };
+  // const handleConfirmOrder = async () => {
+  //   if (!selectedOrder?.id) return;
+  //   try {
+  //     await adminService.confirmPaymentOrder(selectedOrder.id);
+  //     showToast(
+  //       "success",
+  //       "Thanh toán đơn hàng",
+  //       "Đơn hàng đã được thanh toán thành công"
+  //     );
+  //     fetchOrderSummary();
+  //     setShowConfirmPaidModal(false);
+  //   } catch (error) {
+  //     handleApiError(error);
+  //   }
+  // };
 
   const getChartData = () => {
     if (!summary) return [];
@@ -244,7 +323,7 @@ export const AdminOrders: React.FC = () => {
       </Row>
 
       {/* Order Chart */}
-      <Card className="mb-4">
+      {/* <Card className="mb-4">
         <Card.Header className="d-flex justify-content-between align-items-center">
           <h5 className="mb-0">Thống kê đơn hàng</h5>
           <div className="d-flex gap-3 align-items-center">
@@ -268,8 +347,8 @@ export const AdminOrders: React.FC = () => {
                   timeRange === "week"
                     ? "weekday"
                     : timeRange === "month"
-                      ? "week"
-                      : "month"
+                    ? "week"
+                    : "month"
                 }
                 label={{
                   value: "Thời gian",
@@ -336,47 +415,102 @@ export const AdminOrders: React.FC = () => {
             </BarChart>
           </ResponsiveContainer>
         </Card.Body>
-      </Card>
+      </Card> */}
 
       {/* Recent Orders */}
       <Card>
-        <Card.Header className="d-flex justify-content-between align-items-center">
-          <h5 className="mb-0">Đơn hàng gần đây</h5>
-          <div className="d-flex gap-3 align-items-center">
-            <Form.Select
-              style={{ width: "auto" }}
-              value={orderTimeRange}
-              onChange={(e) => setOrderTimeRange(e.target.value)}
-            >
-              <option value="month">Tháng này</option>
-              <option value="year">Năm nay</option>
-              <option value="all">Tất cả</option>
-            </Form.Select>
-            <Button
-              variant="primary"
-              className="d-flex align-items-center gap-2"
-              onClick={() => setShowPlaceOrder(true)}
-            >
-              <PlusCircle size={20} />
-              Tạo đơn hàng
-            </Button>
-            <div className="d-flex align-items-end">
-              <span className="me-2">Hiển thị:</span>
-              <Form.Select
-                style={{ width: "auto" }}
-                value={pagination.itemsPerPage}
-                onChange={(e) =>
-                  setPagination((prev) => ({
-                    ...prev,
-                    itemsPerPage: parseInt(e.target.value),
-                    currentPage: 1,
-                  }))
-                }
+        <Card.Header>
+          <div className="d-flex flex-column gap-3 align-items-center">
+            <div className="w-100 d-flex flex-row justify-content-between align-items-center">
+              <h3 className="mb-0">Đơn hàng gần đây</h3>
+              <div className="d-flex align-items-center">
+                <span className="me-2">Hiển thị:</span>
+                <Form.Select
+                  style={{ width: "auto" }}
+                  value={pagination.itemsPerPage}
+                  onChange={(e) =>
+                    setPagination((prev) => ({
+                      ...prev,
+                      itemsPerPage: parseInt(e.target.value),
+                      currentPage: 1,
+                    }))
+                  }
+                >
+                  <option value="5">5 đơn/trang</option>
+                  <option value="10">10 đơn/trang</option>
+                  <option value="15">15 đơn/trang</option>
+                </Form.Select>
+              </div>
+            </div>
+            <div className="w-100 d-flex gap-3 justify-content-between align-items-center">
+              <Button
+                variant="primary"
+                className="d-flex align-items-center gap-2"
+                onClick={() => setShowPlaceOrder(true)}
               >
-                <option value="5">5 đơn/trang</option>
-                <option value="10">10 đơn/trang</option>
-                <option value="15">15 đơn/trang</option>
-              </Form.Select>
+                <PlusCircle size={20} />
+                Tạo đơn hàng
+              </Button>
+              <div className="d-flex gap-3 align-items-center">
+                {"Lọc đơn: "}
+                <Form.Select
+                  style={{ width: "auto" }}
+                  value={orderTimeRange}
+                  onChange={(e) => setOrderTimeRange(e.target.value)}
+                >
+                  <option value="month">Tháng này</option>
+                  <option value="year">Năm nay</option>
+                  <option value="all">Tất cả</option>
+                </Form.Select>
+                <Form.Select
+                  style={{
+                    width: "auto",
+                    backgroundColor:
+                      orderStatusFilter === config.orderPending
+                        ? "#F5D311FF"
+                        : orderStatusFilter === config.orderCompleted
+                        ? "#00BD19FF"
+                        : orderStatusFilter === config.orderCancelled
+                        ? "#F01923FF"
+                        : "",
+                  }}
+                  value={orderStatusFilter}
+                  onChange={(e) => setOrderStatusFilter(e.target.value)}
+                >
+                  <option
+                    style={{
+                      backgroundColor: "#FFF",
+                    }}
+                    value=""
+                  >
+                    Tất cả
+                  </option>
+                  <option
+                    style={{
+                      backgroundColor: "#FFF",
+                    }}
+                    value={config.orderPending}
+                  >
+                    Đơn đang xử lý
+                  </option>
+                  <option
+                    style={{
+                      backgroundColor: "#FFF",
+                    }}
+                    value={config.orderCompleted}
+                  >
+                    Đơn hoàn tất
+                  </option>
+                  <option
+                    style={{
+                      backgroundColor: "#FFF",
+                    }}
+                    value={config.orderCancelled}
+                  >
+                    Đơn huỷ
+                  </option>
+                </Form.Select>
+              </div>
             </div>
           </div>
         </Card.Header>
@@ -461,106 +595,164 @@ export const AdminOrders: React.FC = () => {
                   </tr>
                 );
               })} */}
-              {
-                paginatedOrders.map((order) => {
-                  const isEditable = isBeforeCutoff(order.createdAt || "");
-                  return (
-                    <tr
-                      key={order.id}
-                      onDoubleClick={() => {
-                        if (!order.isPaid) {
-                          setSelectedOrder(order);
-                          setShowOrderModal(true);
-                        }
-                      }}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <td>{order.id}</td>
-                      {/* <td>
+              {paginatedOrders.map((order) => {
+                const isEditable = isBeforeCutoff(order.createdAt || "");
+                return (
+                  <tr
+                    key={order.id}
+                    onDoubleClick={() => {
+                      if (!order.isPaid) {
+                        setSelectedOrder(order);
+                        setShowOrderModal(true);
+                      }
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td>{order.id}</td>
+                    {/* <td>
                         {format(
                           new Date(order.createdAt || ""),
                           "dd/MM/yyyy HH:mm"
                         )}
                       </td> */}
-                      <td>{order.customerName}</td>
-                      <td>{order.note || "-"}</td>
-                      <td>
-                      <Badge
-                          bg={
-                            order.isPaid
-                              ? "success"
-                              : "warning"
-                          }
-                        >
-                          {order.isPaid
-                              ? <MdOutlinePaid size={16} />
-                              : <MdPaid size={16} />}
+                    <td>{order.customerName}</td>
+                    <td>{order.note || "-"}</td>
+                    <td>
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id="button-tooltip">
+                            Đơn hàng{" "}
+                            {order.isPaid ? "đã thanh toán" : "chưa thanh toán"}
+                          </Tooltip>
+                        }
+                      >
+                        <Badge bg={order.isPaid ? "success" : "warning"}>
+                          {order.isPaid ? (
+                            <MdOutlinePaid size={16} />
+                          ) : (
+                            <MdPaid size={16} />
+                          )}
                         </Badge>
-                      </td>
-                      <td>{order.totalPrice?.toLocaleString()} đ</td>
-                      <td>
+                      </OverlayTrigger>
+                    </td>
+                    <td>{order.totalPrice?.toLocaleString()} đ</td>
+                    <td>
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={
+                          <Tooltip id="button-tooltip">
+                            Đơn hàng{" "}
+                            {order.status === config.orderCompleted
+                              ? "đã được đặt"
+                              : order.status === config.orderCancelled
+                              ? "huỷ"
+                              : "đang xử lý"}
+                          </Tooltip>
+                        }
+                      >
                         <Badge
                           bg={
                             order.status === config.orderCompleted
                               ? "success"
                               : order.status === config.orderCancelled
-                                ? "danger"
-                                : "warning"
+                              ? "danger"
+                              : "warning"
                           }
                         >
-                          {order.status === config.orderCompleted
-                              ? <AiOutlineFileDone size={16} />
-                              : order.status === config.orderCancelled
-                                ? <MdOutlineCancel size={16} />
-                                : <MdOutlinePendingActions size={16} />}
-                          
+                          {order.status === config.orderCompleted ? (
+                            <AiOutlineFileDone size={16} />
+                          ) : order.status === config.orderCancelled ? (
+                            <MdOutlineCancel size={16} />
+                          ) : (
+                            <MdOutlinePendingActions size={16} />
+                          )}
                         </Badge>
-                      </td>
-                      <td>
-                        <div className="d-flex gap-2">
-                          {(isEditable && !order.isPaid) && (
+                      </OverlayTrigger>
+                    </td>
+                    <td>
+                      <div className="d-flex gap-2">
+                        {isEditable &&
+                          !order.isPaid &&
+                          order.status === config.orderPending && (
                             <>
-                              <Button
-                                size="sm"
-                                variant="outline-primary"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedOrder(order);
-                                  setShowOrderModal(true);
-                                }}
+                              <OverlayTrigger
+                                placement="top"
+                                overlay={
+                                  <Tooltip id="button-tooltip">
+                                    Cập nhật thông tin đơn hàng
+                                  </Tooltip>
+                                }
                               >
-                                <Edit2 size={16} />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline-danger"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedOrder(order);
-                                  setShowDeleteModal(true);
-                                }}
+                                <Button
+                                  size="sm"
+                                  variant="outline-primary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedOrder(order);
+                                    setShowOrderModal(true);
+                                  }}
+                                >
+                                  <Edit2 size={16} />
+                                </Button>
+                              </OverlayTrigger>
+
+                              <OverlayTrigger
+                                placement="top"
+                                overlay={
+                                  <Tooltip id="button-tooltip">
+                                    Huỷ đơn hàng
+                                  </Tooltip>
+                                }
                               >
-                                <Trash2 size={16} />
-                              </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline-danger"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedOrder(order);
+                                    setShowDeleteModal(true);
+                                  }}
+                                >
+                                  <Trash2 size={16} />
+                                </Button>
+                              </OverlayTrigger>
                             </>
                           )}
-                          {
-                            (order.status === config.orderPending) && (
-                              <Button
-                                size="sm"
-                                variant="outline-success"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedOrder(order);
-                                  setShowCompleteOrderModal(true);
-                                }}
-                              >
-                                <BsFillBagCheckFill size={16} />
-                              </Button>
-                            )
-                          }
-                          {
-                            !order.isPaid ? (<Button
+                        {order.status === config.orderPending && (
+                          <OverlayTrigger
+                            placement="top"
+                            overlay={
+                              <Tooltip id="button-tooltip">
+                                Xác nhận đơn hàng đã hoàn thành
+                              </Tooltip>
+                            }
+                          >
+                            <Button
+                              size="sm"
+                              variant="outline-success"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedOrder(order);
+                                setShowCompleteOrderModal(true);
+                              }}
+                            >
+                              <BsFillBagCheckFill size={16} />
+                            </Button>
+                          </OverlayTrigger>
+                        )}
+                        {!order.isPaid &&
+                        (order.status === config.orderPending ||
+                          order.status === config.orderCompleted) ? (
+                          <OverlayTrigger
+                            placement="top"
+                            overlay={
+                              <Tooltip id="button-tooltip">
+                                Xác nhận đơn hàng đã thanh toán
+                              </Tooltip>
+                            }
+                          >
+                            <Button
                               size="sm"
                               variant="outline-success"
                               onClick={(e) => {
@@ -570,46 +762,47 @@ export const AdminOrders: React.FC = () => {
                               }}
                             >
                               <DollarSign size={16} />
-                            </Button>):''
-                          }
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              }
+                            </Button>
+                          </OverlayTrigger>
+                        ) : (
+                          ""
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
-          
         </Card.Body>
-        <Card.Footer className="d-flex justify-content-center align-items-middle">
-            <Pagination>
-              <Pagination.First
-                onClick={() => handlePageChange(1)}
-                disabled={pagination.currentPage === 1}
-              />
-              <Pagination.Prev
-                onClick={() => handlePageChange(pagination.currentPage - 1)}
-                disabled={pagination.currentPage === 1}
-              />
-              {[...Array(totalPages)].map((_, idx) => (
-                <Pagination.Item
-                  key={idx + 1}
-                  active={idx + 1 === pagination.currentPage}
-                  onClick={() => handlePageChange(idx + 1)}
-                >
-                  {idx + 1}
-                </Pagination.Item>
-              ))}
-              <Pagination.Next
-                onClick={() => handlePageChange(pagination.currentPage + 1)}
-                disabled={pagination.currentPage === totalPages}
-              />
-              <Pagination.Last
-                onClick={() => handlePageChange(totalPages)}
-                disabled={pagination.currentPage === totalPages}
-              />
-            </Pagination>
+        <Card.Footer className="d-flex justify-content-center align-items-center pt-4">
+          <Pagination>
+            <Pagination.First
+              onClick={() => handlePageChange(1)}
+              disabled={pagination.currentPage === 1}
+            />
+            <Pagination.Prev
+              onClick={() => handlePageChange(pagination.currentPage - 1)}
+              disabled={pagination.currentPage === 1}
+            />
+            {[...Array(totalPages)].map((_, idx) => (
+              <Pagination.Item
+                key={idx + 1}
+                active={idx + 1 === pagination.currentPage}
+                onClick={() => handlePageChange(idx + 1)}
+              >
+                {idx + 1}
+              </Pagination.Item>
+            ))}
+            <Pagination.Next
+              onClick={() => handlePageChange(pagination.currentPage + 1)}
+              disabled={pagination.currentPage === totalPages}
+            />
+            <Pagination.Last
+              onClick={() => handlePageChange(totalPages)}
+              disabled={pagination.currentPage === totalPages}
+            />
+          </Pagination>
         </Card.Footer>
       </Card>
 
@@ -643,28 +836,39 @@ export const AdminOrders: React.FC = () => {
             title={`Mã đơn hàng: ${selectedOrder.id}`}
           />
 
-          <DeleteOrderModal
+          {/* <DeleteOrderModal
             show={showDeleteModal}
             order={selectedOrder}
             handleClose={() => setShowDeleteModal(false)}
             handleDelete={handleDeleteOrder}
-          />
+          /> */}
 
-          <ConfirmPaymentModal
+          {/* <ConfirmPaymentModal
             show={showConfirmPaidModal}
             order={selectedOrder}
             handleClose={() => setShowConfirmPaidModal(false)}
             handleConfirm={handleConfirmOrder}
-          />
+          /> */}
 
           <CustomInformationModal
-            show={showConfirmPaidModal}
+            show={showCustomModal}
             order={selectedOrder}
-            title={customModalTitle}
-            titleBg={customModalTitleBg}
-            action={customModalAction}
-            informationText={customModalInformation}
-            handleClose={() => setShowCompleteOrderModal(false)}
+            title={customModal.title}
+            titleBg={customModal.titleBg}
+            action={customModal.action}
+            informationText={customModal.information}
+            handleClose={() => {
+              setCustomModal(() => ({
+                title: "",
+                titleBg: "",
+                information: "",
+                action: "",
+              }));
+              setShowCompleteOrderModal(false);
+              setShowConfirmPaidModal(false);
+              setShowDeleteModal(false);
+              setShowCustomModal(false);
+            }}
             handleAction={handleCustomModalAction}
           />
         </>

@@ -368,10 +368,7 @@ const TodayOrdersModal: React.FC<TodayOrdersModalProps> = ({
                   {orders.map((order) => (
                     <tr key={order.id}>
                       <td>
-                        {format(
-                          new Date(order.createdAt || ""),
-                          "HH : mm : ss"
-                        )}
+                        {format(new Date(order.createdAt || ""), "HH:mm:ss")}
                       </td>
                       <td>
                         <div>{order.customerName}</div>
@@ -387,6 +384,7 @@ const TodayOrdersModal: React.FC<TodayOrdersModalProps> = ({
                               {item.name} × {item.quantity}
                             </li>
                           ))}
+                          Note: - {order.note}
                         </ul>
                       </td>
                       <td>
@@ -401,11 +399,17 @@ const TodayOrdersModal: React.FC<TodayOrdersModalProps> = ({
                             order.status === config.orderCompleted
                               ? "success"
                               : order.status === config.orderCancelled
-                              ? "warning"
-                              : "danger"
+                              ? "danger"
+                              : "warning"
                           }
                         >
-                          {order.status}
+                          {order.status === config.orderPending
+                            ? "Đang xử lý"
+                            : order.status === config.orderCompleted
+                            ? "Hoàn tất"
+                            : order.status === config.orderCancelled
+                            ? "Đã huỷ"
+                            : "Xin thua"}
                         </Badge>
                       </td>
                     </tr>

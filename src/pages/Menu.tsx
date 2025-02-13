@@ -425,16 +425,3 @@ export const Menu: React.FC<MenuProps> = ({
     </Container>
   );
 };
-
-const SplashScreen: React.FC = ({ onFinish }: { onFinish: () => void }) => {
-  useEffect(() => {
-    const timer = setTimeout(onFinish, 2000);
-    return () => clearTimeout(timer);
-  }, [onFinish]);
-
-  return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-primary text-white">
-      <h1>FoodieExpress</h1>
-    </div>
-  );
-};
