@@ -92,7 +92,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
     }
   };
 
-  const isBeforeCutoff = (orderDate: string) => {
+  const isBeforeCutoff = (orderDate: number) => {
     const orderDateTime = new Date(orderDate);
     const cutoffTime = parse(config.orderCutoffTime, "HH:mm", orderDateTime);
     return isBefore(orderDateTime, cutoffTime);
@@ -147,6 +147,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
 
   const paginatedOrders = orders
     .filter((order) => order.id?.includes(orderId))
+    .sort((a, b) => b.createdAt - a.createdAt)
     .slice(
       (pagination.currentPage - 1) * pagination.itemsPerPage,
       pagination.currentPage * pagination.itemsPerPage
@@ -308,7 +309,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
           <Row xs={1} md={2} lg={3} className="g-4">
             {paginatedOrders.map((order) => {
               const isEditable =
-                isBeforeCutoff(order.createdAt || "") &&
+                isBeforeCutoff(order.createdAt || 0) &&
                 order.status === config.orderPending;
               return (
                 <Col key={order.id}>
@@ -328,7 +329,11 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
                   >
                     <Card
                       className={`h-100 shadow-sm order-card ${
-                        isEditable ? "editable" : "completed"
+                        order.status === config.orderPending
+                          ? "pending"
+                          : order.status === config.orderCompleted
+                          ? "completed"
+                          : "cancelled"
                       }`}
                       onDoubleClick={() => toggleUppdateOrderModal(order)}
                     >
@@ -470,11 +475,14 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
             transform: translateY(-5px);
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
           }
-          .order-card.editable {
+          .order-card.pending {
             border-left: 4px solid var(--bs-warning);
           }
           .order-card.completed {
             border-left: 4px solid var(--bs-success);
+          }
+          .order-card.cancelled {
+            border-left: 4px solid var(--bs-danger);
           }
         `}
       </style>

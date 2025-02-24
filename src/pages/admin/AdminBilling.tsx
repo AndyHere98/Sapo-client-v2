@@ -18,6 +18,7 @@ import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { useToast } from "../../contexts/ToastContext";
 import { EmptyState } from "../../components/EmptyState";
 import { FileText } from "lucide-react";
+import { format } from "date-fns";
 
 export const AdminBilling: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -134,10 +135,16 @@ export const AdminBilling: React.FC = () => {
                 <tr key={index}>
                   <td>{order.id}</td>
                   <td>{order.customerName}</td>
-                  <td>{(order.totalPrice ? order.totalPrice : 0).toLocaleString()} đ</td>
+                  <td>
+                    {(order.totalPrice ? order.totalPrice : 0).toLocaleString()}{" "}
+                    đ
+                  </td>
                   <td>
                     <Badge bg="warning">
-                      {new Date(order.createdAt ? order.createdAt : '').toLocaleDateString()}
+                      {format(
+                        new Date(order.createdAt ? order.createdAt : ""),
+                        "MMM d, yyyy"
+                      )}
                     </Badge>
                   </td>
                 </tr>
