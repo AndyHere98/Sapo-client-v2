@@ -10,6 +10,8 @@ import {
   Container,
   Alert,
   InputGroup,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
 import { format, parse, isBefore } from "date-fns";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -305,68 +307,91 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
 
           <Row xs={1} md={2} lg={3} className="g-4">
             {paginatedOrders.map((order) => {
-              const isEditable = isBeforeCutoff(order.createdAt || "");
+              const isEditable =
+                isBeforeCutoff(order.createdAt || "") &&
+                order.status === config.orderPending;
               return (
                 <Col key={order.id}>
-                  <Card
-                    className={`h-100 shadow-sm order-card ${
-                      isEditable ? "editable" : "completed"
-                    }`}
-                    onDoubleClick={() => toggleUppdateOrderModal(order)}
+                  <OverlayTrigger
+                    placement="top"
+                    overlay={
+                      <Tooltip id="button-tooltip">
+                        {order.status === config.orderPending
+                          ? "Đơn hàng đang xử lý"
+                          : order.status === config.orderCompleted
+                          ? "Đơn hàng đã hoàn tất"
+                          : order.status === config.orderCancelled
+                          ? "Đơn hàng đã huỷ"
+                          : "Xin thua"}
+                      </Tooltip>
+                    }
                   >
-                    <Card.Body>
-                      <div className="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                          <h5 className="mb-1">Đơn hàng: {order.id}</h5>
-                          <p className="text-muted mb-0">
-                            {format(
-                              new Date(order.createdAt || ""),
-                              "MMM d, yyyy HH:mm"
-                            )}
-                          </p>
-                          <hr />
+                    <Card
+                      className={`h-100 shadow-sm order-card ${
+                        isEditable ? "editable" : "completed"
+                      }`}
+                      onDoubleClick={() => toggleUppdateOrderModal(order)}
+                    >
+                      <Card.Body>
+                        <div className="d-flex justify-content-between align-items-start mb-3">
+                          <div>
+                            <h5 className="mb-1">Đơn hàng: {order.id}</h5>
+                            <p className="text-muted mb-0">
+                              {format(
+                                new Date(order.createdAt || ""),
+                                "MMM d, yyyy HH:mm"
+                              )}
+                            </p>
+                            <hr />
+                          </div>
+                          {isEditable && <Badge bg="warning">Editable</Badge>}
                         </div>
-                        {isEditable && <Badge bg="warning">Editable</Badge>}
-                      </div>
-                      <div className="mb-3">
-                        <strong>Khách hàng:</strong>
-                        <p className="mb-1">{order.customerName}</p>
-                        {/* <small className="text-muted">
+                        <div className="mb-3">
+                          <strong>Khách hàng:</strong>
+                          <p className="mb-1">{order.customerName}</p>
+                          {/* <small className="text-muted">
                           {order.customerEmail}
                         </small> */}
-                      </div>
-                      <div className="d-flex justify-content-between align-items-center">
-                        <Badge
-                          bg={
-                            order.status === config.orderCompleted
-                              ? "success"
-                              : order.status === config.orderCancelled
-                              ? "danger"
-                              : "warning"
-                          }
-                        >
-                          {order.status}
-                        </Badge>
-                        <strong>
-                          {" Tổng: "}
-                          {(order.totalPrice || 0)
-                            .toString()
-                            .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                          {` ${config.currency}`}
-                        </strong>
-                      </div>
-                      <div className="d-flex justify-content-end align-items-center">
-                        {isEditable && (
-                          <Button
-                            variant="danger"
-                            onClick={() => toggleDeleteOrderModal(order)}
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center">
+                          <Badge
+                            bg={
+                              order.status === config.orderCompleted
+                                ? "success"
+                                : order.status === config.orderCancelled
+                                ? "danger"
+                                : "warning"
+                            }
                           >
-                            {loading ? "Đang huỷ đơn..." : "Huỷ đơn hàng"}
-                          </Button>
-                        )}
-                      </div>
-                    </Card.Body>
-                  </Card>
+                            {order.status === config.orderPending
+                              ? "Đang xử lý"
+                              : order.status === config.orderCompleted
+                              ? "Hoàn tất"
+                              : order.status === config.orderCancelled
+                              ? "Đã huỷ"
+                              : "Xin thua"}
+                          </Badge>
+                          <strong>
+                            {" Tổng: "}
+                            {(order.totalPrice || 0)
+                              .toString()
+                              .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                            {` ${config.currency}`}
+                          </strong>
+                        </div>
+                        <div className="d-flex justify-content-end align-items-center">
+                          {isEditable && (
+                            <Button
+                              variant="danger"
+                              onClick={() => toggleDeleteOrderModal(order)}
+                            >
+                              {loading ? "Đang huỷ đơn..." : "Huỷ đơn hàng"}
+                            </Button>
+                          )}
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </OverlayTrigger>
                 </Col>
               );
             })}

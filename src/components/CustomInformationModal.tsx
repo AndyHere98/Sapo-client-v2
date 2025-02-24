@@ -5,10 +5,10 @@ import { OrderItem } from "../types/api";
 interface CustomInformationModalProps {
   show: boolean;
   order: OrderItem | null;
-  title: string,
-  titleBg: string,
-  action: string,
-  informationText: string,
+  title: string;
+  titleBg: string;
+  action: string;
+  informationText: string;
   handleClose: () => void;
   handleAction: () => void;
 }
@@ -29,19 +29,17 @@ const CustomInformationModal: React.FC<CustomInformationModalProps> = ({
   return (
     <Modal show={show} onHide={handleClose} centered>
       <Modal.Header className={`bg-${titleBg} text-white`}>
-        <Modal.Title>${title}</Modal.Title>
+        <Modal.Title>{title}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <p>
-          ${informationText}
-        </p>
+        <p>{informationText}</p>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={handleClose}>
           Đóng
         </Button>
-        <Button variant="danger" onClick={handleAction}>
-          ${action}
+        <Button variant={`${titleBg}`} onClick={handleAction}>
+          {action}
         </Button>
       </Modal.Footer>
     </Modal>

@@ -1,10 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Button, Form, Row, Col, Alert, Badge, Table, Card } from 'react-bootstrap';
-import { CustomerInfo, MenuItem, CartItem } from '../types/api';
-import { menuService } from '../services/api';
-import { config } from '../config/config';
-import { LoadingSpinner } from './LoadingSpinner';
-import { PlusCircle, MinusCircle, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  Modal,
+  Button,
+  Form,
+  Row,
+  Col,
+  Alert,
+  Badge,
+  Table,
+  Card,
+} from "react-bootstrap";
+import { CustomerInfo, MenuItem, CartItem } from "../types/api";
+import { menuService } from "../services/api";
+import { config } from "../config/config";
+import { LoadingSpinner } from "./LoadingSpinner";
+import { PlusCircle, MinusCircle, Trash2 } from "lucide-react";
 
 interface MenuModalProps {
   show: boolean;
@@ -25,7 +35,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({
   total,
   onSubmit,
   showMenu = false,
-  onUpdateCart
+  onUpdateCart,
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +70,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
+
       if (cart.length === 0) {
         setError("Please select at least one item");
         return;
@@ -85,7 +95,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({
   const handleAddToCart = (item: MenuItem) => {
     if (onUpdateCart) {
       const updatedCart = [...cart];
-      const existingItem = updatedCart.find(i => i.id === item.id);
+      const existingItem = updatedCart.find((i) => i.id === item.id);
       if (existingItem) {
         existingItem.quantity += 1;
       } else {
@@ -97,20 +107,22 @@ export const MenuModal: React.FC<MenuModalProps> = ({
 
   const handleUpdateQuantity = (itemId: string, delta: number) => {
     if (onUpdateCart) {
-      const updatedCart = cart.map(item => {
-        if (item.id === itemId) {
-          const newQuantity = item.quantity + delta;
-          return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
-        }
-        return item;
-      }).filter(Boolean) as CartItem[];
+      const updatedCart = cart
+        .map((item) => {
+          if (item.id === itemId) {
+            const newQuantity = item.quantity + delta;
+            return newQuantity > 0 ? { ...item, quantity: newQuantity } : null;
+          }
+          return item;
+        })
+        .filter(Boolean) as CartItem[];
       onUpdateCart(updatedCart);
     }
   };
 
   const handleRemoveFromCart = (itemId: string) => {
     if (onUpdateCart) {
-      const updatedCart = cart.filter(item => item.id !== itemId);
+      const updatedCart = cart.filter((item) => item.id !== itemId);
       onUpdateCart(updatedCart);
     }
   };
@@ -126,7 +138,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({
         ) : (
           <Form onSubmit={handleSubmit}>
             {error && <Alert variant="danger">{error}</Alert>}
-            
+
             {/* Customer Information */}
             <Card className="mb-4">
               <Card.Header>
@@ -140,11 +152,16 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                       <Form.Control
                         required
                         type="text"
+                        readOnly={
+                          `${initialCustomerInfo.customerName}` ? true : false
+                        }
                         value={customerInfo.customerName}
-                        onChange={(e) => setCustomerInfo(prev => ({
-                          ...prev,
-                          customerName: e.target.value
-                        }))}
+                        onChange={(e) =>
+                          setCustomerInfo((prev) => ({
+                            ...prev,
+                            customerName: e.target.value,
+                          }))
+                        }
                       />
                     </Form.Group>
                   </Col>
@@ -154,11 +171,16 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                       <Form.Control
                         required
                         type="tel"
+                        readOnly={
+                          `${initialCustomerInfo.customerPhone}` ? true : false
+                        }
                         value={customerInfo.customerPhone}
-                        onChange={(e) => setCustomerInfo(prev => ({
-                          ...prev,
-                          customerPhone: e.target.value
-                        }))}
+                        onChange={(e) =>
+                          setCustomerInfo((prev) => ({
+                            ...prev,
+                            customerPhone: e.target.value,
+                          }))
+                        }
                       />
                     </Form.Group>
                   </Col>
@@ -168,11 +190,16 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                       <Form.Control
                         required
                         type="email"
+                        readOnly={
+                          `${initialCustomerInfo.customerEmail}` ? true : false
+                        }
                         value={customerInfo.customerEmail}
-                        onChange={(e) => setCustomerInfo(prev => ({
-                          ...prev,
-                          customerEmail: e.target.value
-                        }))}
+                        onChange={(e) =>
+                          setCustomerInfo((prev) => ({
+                            ...prev,
+                            customerEmail: e.target.value,
+                          }))
+                        }
                       />
                     </Form.Group>
                   </Col>
@@ -194,7 +221,10 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                           <Card.Body>
                             <h6>{item.name}</h6>
                             <p className="text-muted mb-2">
-                              {item.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ
+                              {item.price
+                                .toString()
+                                .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
+                              đ
                             </p>
                             <Button
                               variant="outline-primary"
@@ -225,7 +255,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                     <tr>
                       <th>Món ăn</th>
                       <th>Đơn giá</th>
-                      <th style={{ width: '150px' }}>Số lượng</th>
+                      <th style={{ width: "150px" }}>Số lượng</th>
                       <th>Thành tiền</th>
                       <th></th>
                     </tr>
@@ -234,7 +264,12 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                     {cart.map((item) => (
                       <tr key={item.id}>
                         <td>{item.name}</td>
-                        <td>{item.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ</td>
+                        <td>
+                          {item.price
+                            .toString()
+                            .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
+                          đ
+                        </td>
                         <td>
                           <div className="d-flex align-items-center gap-2">
                             <Button
@@ -257,7 +292,8 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                         <td>
                           {(item.price * item.quantity)
                             .toString()
-                            .replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ
+                            .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
+                          đ
                         </td>
                         <td>
                           <Button
@@ -277,7 +313,10 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                         </td>
                         <td colSpan={2}>
                           <strong>
-                            {total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} đ
+                            {total
+                              .toString()
+                              .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}{" "}
+                            đ
                           </strong>
                         </td>
                       </tr>
@@ -299,10 +338,14 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                       <Form.Label>Loại hình thanh toán</Form.Label>
                       <Form.Select
                         value={orderExtraItem.paymentType}
-                        onChange={(e) => setOrderExtraItem(prev => ({
-                          ...prev,
-                          paymentType: e.target.value as "PREPAID" | "POSTPAID"
-                        }))}
+                        onChange={(e) =>
+                          setOrderExtraItem((prev) => ({
+                            ...prev,
+                            paymentType: e.target.value as
+                              | "PREPAID"
+                              | "POSTPAID",
+                          }))
+                        }
                       >
                         <option value="PREPAID">Trả trước</option>
                         <option value="POSTPAID">Trả sau</option>
@@ -314,10 +357,15 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                       <Form.Label>Hình thức thanh toán</Form.Label>
                       <Form.Select
                         value={orderExtraItem.paymentMethod}
-                        onChange={(e) => setOrderExtraItem(prev => ({
-                          ...prev,
-                          paymentMethod: e.target.value as "CASH" | "MOMO" | "BANK"
-                        }))}
+                        onChange={(e) =>
+                          setOrderExtraItem((prev) => ({
+                            ...prev,
+                            paymentMethod: e.target.value as
+                              | "CASH"
+                              | "MOMO"
+                              | "BANK",
+                          }))
+                        }
                       >
                         <option value="MOMO">Momo</option>
                         <option value="CASH">Tiền mặt</option>
@@ -332,10 +380,12 @@ export const MenuModal: React.FC<MenuModalProps> = ({
                     as="textarea"
                     rows={3}
                     value={orderExtraItem.orderNote}
-                    onChange={(e) => setOrderExtraItem(prev => ({
-                      ...prev,
-                      orderNote: e.target.value
-                    }))}
+                    onChange={(e) =>
+                      setOrderExtraItem((prev) => ({
+                        ...prev,
+                        orderNote: e.target.value,
+                      }))
+                    }
                   />
                 </Form.Group>
               </Card.Body>
@@ -347,7 +397,11 @@ export const MenuModal: React.FC<MenuModalProps> = ({
         <Button variant="secondary" onClick={onHide}>
           Huỷ
         </Button>
-        <Button variant="primary" onClick={handleSubmit} disabled={loading || cart.length === 0}>
+        <Button
+          variant="primary"
+          onClick={handleSubmit}
+          disabled={loading || cart.length === 0}
+        >
           {loading ? "Đang xử lý..." : "Tạo đơn hàng"}
         </Button>
       </Modal.Footer>

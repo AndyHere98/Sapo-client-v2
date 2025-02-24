@@ -18,6 +18,7 @@ export interface CustomerInfo {
   customerPhone: string;
   customerEmail: string;
   ipAddress?: string;
+  isAdmin: boolean;
   pcHostName?: string;
   balance?: number;
 }
@@ -41,7 +42,7 @@ export interface OrderItem {
   orderDetails: CartItem[];
   status?: 'P' | 'S' | 'C';
   totalPrice?: number;
-  createdAt?: string;
+  createdAt: number | 0;
   note?: string;
   paymentMethod?: string;
   paymentType?: string;

@@ -1,11 +1,27 @@
-import React from "react";
-import { Outlet } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 import { AdminSidebar } from "../../components/admin/AdminSidebar";
 import { Container } from "react-bootstrap";
 import { motion } from "framer-motion";
 import { ToastProvider } from "../../contexts/ToastContext";
+import { CustomerInfo } from "../../types/api";
 
-export const AdminDashboard: React.FC = () => {
+interface AdminDashboardProps {
+  customerInfo: CustomerInfo;
+  onGetCustomerInfo: () => void;
+}
+
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({
+  customerInfo,
+  onGetCustomerInfo,
+}) => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    onGetCustomerInfo();
+    if (!customerInfo.isAdmin) navigate("/menu");
+  }, []);
+
   return (
     <ToastProvider>
       <div className="admin-dashboard">

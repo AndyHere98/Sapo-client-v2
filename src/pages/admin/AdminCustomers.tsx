@@ -74,13 +74,13 @@ export const AdminCustomers: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<AdminCustomerSummary | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<string | null>(null);
-  const [editingCustomerName, setEditingCustomerName] = useState<string>('');
-  const [editingCustomerPhone, setEditingCustomerPhone] = useState<string>('');
-  const [editingCustomerEmail, setEditingCustomerEmail] = useState<string>('');
+  const [editingCustomerName, setEditingCustomerName] = useState<string>("");
+  const [editingCustomerPhone, setEditingCustomerPhone] = useState<string>("");
+  const [editingCustomerEmail, setEditingCustomerEmail] = useState<string>("");
   const [customerEdits, setCustomerEdits] = useState<CustomerInfo>({
     customerName: editingCustomerName,
     customerPhone: editingCustomerPhone,
-    customerEmail: editingCustomerEmail
+    customerEmail: editingCustomerEmail,
   });
   const { showToast, handleApiError } = useToast();
 
@@ -106,22 +106,25 @@ export const AdminCustomers: React.FC = () => {
   //   }));
 
   //   console.log('setCustomerEdits', customerEdits);
-    
+
   // };
 
   useEffect(() => {
     setCustomerEdits({
       customerName: editingCustomerName,
       customerPhone: editingCustomerPhone,
-      customerEmail: editingCustomerEmail
-    })
-  }, [editingCustomerName, editingCustomerPhone, editingCustomerEmail])
+      customerEmail: editingCustomerEmail,
+    });
+  }, [editingCustomerName, editingCustomerPhone, editingCustomerEmail]);
 
-  const handleUpdateCustomer = async (customerId: string, customerInfo: CustomerInfo) => {
+  const handleUpdateCustomer = async (
+    customerId: string,
+    customerInfo: CustomerInfo
+  ) => {
     try {
       setLoading(true);
-      console.log('handleUpdateCustomer', customerInfo);
-      
+      console.log("handleUpdateCustomer", customerInfo);
+
       await adminService.updateCustomer(customerId, customerInfo);
       showToast(
         "success",
@@ -130,9 +133,9 @@ export const AdminCustomers: React.FC = () => {
       );
       setEditingCustomer(null);
       setCustomerEdits({
-        customerName: '',
-        customerPhone: '',
-        customerEmail: ''
+        customerName: "",
+        customerPhone: "",
+        customerEmail: "",
       });
       await fetchCustomerSummary();
     } catch (error) {
@@ -237,25 +240,21 @@ export const AdminCustomers: React.FC = () => {
                 const editedCustomer: CustomerInfo = {
                   customerName: editingCustomerName || customer.customerName,
                   customerPhone: editingCustomerPhone || customer.customerPhone,
-                  customerEmail: editingCustomerEmail || customer.customerEmail
+                  customerEmail: editingCustomerEmail || customer.customerEmail,
                 };
 
                 return (
                   <tr key={customer.ipAddress}>
                     <td
-                      onDoubleClick={() =>
-                      {
-                        setEditingCustomer(customer?.ipAddress || '')
+                      onDoubleClick={() => {
+                        setEditingCustomer(customer?.ipAddress || "");
                         // setEditingCustomerEmail(customer.customerEmail)
-                      }
-                      }
+                      }}
                     >
                       {isEditing ? (
                         <Form.Control
                           type="text"
-                          value={
-                            editedCustomer.customerName
-                          }
+                          value={editedCustomer.customerName}
                           onChange={(e) =>
                             // handleCellEdit(
                             //   customer?.ipAddress || '',
@@ -271,15 +270,13 @@ export const AdminCustomers: React.FC = () => {
                     </td>
                     <td
                       onDoubleClick={() =>
-                        setEditingCustomer(customer?.ipAddress || '')
+                        setEditingCustomer(customer?.ipAddress || "")
                       }
                     >
                       {isEditing ? (
                         <Form.Control
                           type="text"
-                          value={
-                            editedCustomer.customerPhone
-                          }
+                          value={editedCustomer.customerPhone}
                           onChange={(e) =>
                             // handleCellEdit(
                             //   customer?.ipAddress || '',
@@ -295,15 +292,13 @@ export const AdminCustomers: React.FC = () => {
                     </td>
                     <td
                       onDoubleClick={() =>
-                        setEditingCustomer(customer?.ipAddress || '')
+                        setEditingCustomer(customer?.ipAddress || "")
                       }
                     >
                       {isEditing ? (
                         <Form.Control
                           type="email"
-                          value={
-                            editedCustomer.customerEmail
-                          }
+                          value={editedCustomer.customerEmail}
                           onChange={(e) =>
                             // handleCellEdit(
                             //   customer?.ipAddress || '',
@@ -332,10 +327,13 @@ export const AdminCustomers: React.FC = () => {
                       {isEditing && (
                         <div className="d-flex gap-2">
                           <Button
-                            variant="success"
+                            variant="primary"
                             size="sm"
                             onClick={() =>
-                              handleUpdateCustomer(customer?.ipAddress || '', editedCustomer)
+                              handleUpdateCustomer(
+                                customer?.ipAddress || "",
+                                editedCustomer
+                              )
                             }
                             className="d-flex align-items-center gap-2"
                           >
@@ -346,12 +344,7 @@ export const AdminCustomers: React.FC = () => {
                             variant="outline-secondary"
                             size="sm"
                             onClick={() => {
-                              setEditingCustomerName('');
-                              setCustomerEdits({
-                                customerName: '',
-                                customerPhone: '',
-                                customerEmail: ''
-                              });
+                              setEditingCustomer("");
                             }}
                           >
                             Huỷ

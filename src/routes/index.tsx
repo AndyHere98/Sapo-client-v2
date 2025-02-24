@@ -18,7 +18,12 @@ export const AppRoutes = ({ customerInfo, onGetCustomerInfo }: RoutesProps) => {
   return useRoutes([
     {
       path: "/",
-      element: <CustomerLayout />,
+      element: (
+        <CustomerLayout
+          customerInfo={customerInfo}
+          onGetCustomerInfo={onGetCustomerInfo}
+        />
+      ),
       children: [
         { index: true, element: <Navigate to="/menu" replace /> },
         {
@@ -52,7 +57,12 @@ export const AppRoutes = ({ customerInfo, onGetCustomerInfo }: RoutesProps) => {
     },
     {
       path: "/admin",
-      element: <AdminDashboard />,
+      element: (
+        <AdminDashboard
+          customerInfo={customerInfo}
+          onGetCustomerInfo={onGetCustomerInfo}
+        />
+      ),
       children: [
         { index: true, element: <Navigate to="/admin/orders" replace /> },
         { path: "orders", element: <AdminOrders /> },
