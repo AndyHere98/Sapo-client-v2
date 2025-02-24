@@ -7,8 +7,6 @@ import {
   Alert,
   Container,
   Badge,
-  Nav,
-  Navbar,
 } from "react-bootstrap";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CustomToast } from "../components/CustomToast";
@@ -66,7 +64,8 @@ export const Menu: React.FC<MenuProps> = ({
         showToast("warning", "Thông tin menu", "Dữ liệu menu đang trống");
       }
       setMenuItems(response.data);
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       const apiError = error.errorData as ApiError;
       showToast("error", `Lỗi lấy thông tin menu`, apiError.errorMessage);
     } finally {
@@ -133,7 +132,8 @@ export const Menu: React.FC<MenuProps> = ({
     );
   };
 
-  const handlePlaceOrder = async (orderExtraItem: object) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handlePlaceOrder = async (orderExtraItem: any) => {
     try {
       console.log("orderExtraItem", orderExtraItem);
 
@@ -143,7 +143,8 @@ export const Menu: React.FC<MenuProps> = ({
         paymentType: orderExtraItem.paymentType,
         note: orderExtraItem.orderNote,
         orderDetails: cart,
-        status: "pending",
+        status: "P",
+        createdAt: 0,
         // total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
       };
       await orderService.placeOrder(order);
@@ -196,7 +197,6 @@ export const Menu: React.FC<MenuProps> = ({
       );
     }
   };
-  const [isSplashVisible, setIsSplashVisible] = useState(true);
 
   if (loading) {
     return <LoadingSpinner centered />;

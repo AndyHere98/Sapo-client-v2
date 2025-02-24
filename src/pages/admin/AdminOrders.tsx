@@ -11,20 +11,11 @@ import {
   OverlayTrigger,
   Tooltip,
 } from "react-bootstrap";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-} from "recharts";
 import { adminService, orderService } from "../../services/api";
 import { AdminOrderSummary, CartItem, OrderItem } from "../../types/api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { MenuModal } from "../../components/MenuModal";
 import { OrderModal } from "../../components/OrderModal";
-import DeleteOrderModal from "../../components/DeleteOrderModal";
 import {
   PlusCircle,
   Edit2,
@@ -34,7 +25,7 @@ import {
 } from "lucide-react";
 import { useToast } from "../../contexts/ToastContext";
 import { EmptyState } from "../../components/EmptyState";
-import { format, parse, isBefore } from "date-fns";
+import { parse, isBefore } from "date-fns";
 import { config } from "../../config/config";
 import {
   MdOutlineCancel,
@@ -46,7 +37,7 @@ import { AiOutlineFileDone } from "react-icons/ai";
 import { BsFillBagCheckFill } from "react-icons/bs";
 import CustomInformationModal from "../../components/CustomInformationModal";
 
-type TimeRange = "week" | "month" | "year";
+// type TimeRange = "week" | "month" | "year";
 
 export const AdminOrders: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -57,7 +48,8 @@ export const AdminOrders: React.FC = () => {
   const [showConfirmPaidModal, setShowConfirmPaidModal] = useState(false);
   const [showCompleteOrderModal, setShowCompleteOrderModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
-  const [timeRange, setTimeRange] = useState<TimeRange>("week");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // const [timeRange, setTimeRange] = useState<TimeRange>("week");
   const [orderTimeRange, setOrderTimeRange] = useState("month");
   const [cart, setCart] = useState<CartItem[]>([]);
   const { showToast, handleApiError } = useToast();
@@ -107,14 +99,14 @@ export const AdminOrders: React.FC = () => {
         information: `Xác nhận đơn hàng ${selectedOrder?.id} đã hoàn tất?`,
       }));
     } else if (showConfirmPaidModal) {
-      setCustomModal((prev) => ({
+      setCustomModal(() => ({
         title: "Xác nhận thanh toán",
         titleBg: "success",
         action: "Hoàn tất",
         information: `Xác nhận đơn hàng ${selectedOrder?.id} đã thanh toán?`,
       }));
     } else if (showDeleteModal) {
-      setCustomModal((prev) => ({
+      setCustomModal(() => ({
         title: "Huỷ đơn hàng",
         titleBg: "danger",
         action: "Xác nhận huỷ",
@@ -131,7 +123,8 @@ export const AdminOrders: React.FC = () => {
         await adminService.completeOrder(selectedOrder.id);
         showToast("success", "Xác nhận đơn hàng", "Đơn hàng đã hoàn tất");
         setShowCompleteOrderModal(false);
-      } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
         handleApiError(error);
       }
     } else if (showConfirmPaidModal) {
@@ -139,7 +132,8 @@ export const AdminOrders: React.FC = () => {
         await adminService.confirmPaymentOrder(selectedOrder.id);
         showToast("success", "Xác nhận đơn hàng", "Đơn hàng đã thanh toán");
         setShowConfirmPaidModal(false);
-      } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
         handleApiError(error);
       }
     } else if (showDeleteModal) {
@@ -147,7 +141,8 @@ export const AdminOrders: React.FC = () => {
         await orderService.cancelOrder(selectedOrder.id);
         showToast("success", "Xác nhận đơn hàng", "Đơn hàng đã huỷ thành công");
         setShowDeleteModal(false);
-      } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
         handleApiError(error);
       }
     }
@@ -170,7 +165,8 @@ export const AdminOrders: React.FC = () => {
         ...prev,
         totalItems: response.data.recentOrders.length,
       }));
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       handleApiError(error);
     } finally {
       setLoading(false);
@@ -192,23 +188,26 @@ export const AdminOrders: React.FC = () => {
   const handlePageChange = (page: number) => {
     setPagination((prev) => ({ ...prev, currentPage: page }));
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handlePlaceOrder = async (orderData: any) => {
     try {
       await orderService.placeOrder(orderData);
       showToast("success", "Đặt đơn hàng", "Đơn hàng đã được tạo thành công");
       setShowPlaceOrder(false);
       fetchOrderSummary();
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       handleApiError(error);
     }
   };
 
-  const isBeforeCutoff = (orderDate: string) => {
+  const isBeforeCutoff = (orderDate: number) => {
     const orderDateTime = new Date(orderDate);
     const cutoffTime = parse(config.orderCutoffTime, "HH:mm", orderDateTime);
     return isBefore(orderDateTime, cutoffTime);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleOrderUpdate = async (orderData: any) => {
     if (!selectedOrder?.id) return;
     try {
@@ -220,7 +219,8 @@ export const AdminOrders: React.FC = () => {
       );
       fetchOrderSummary();
       setShowOrderModal(false);
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       handleApiError(error);
     }
   };
@@ -252,21 +252,6 @@ export const AdminOrders: React.FC = () => {
   //     handleApiError(error);
   //   }
   // };
-
-  const getChartData = () => {
-    if (!summary) return [];
-
-    switch (timeRange) {
-      case "week":
-        return summary.dailyOrderStats.slice(-7);
-      case "month":
-        return summary.dailyOrderStats.slice(-30);
-      case "year":
-        return summary.dailyOrderStats.slice(-365);
-      default:
-        return summary.dailyOrderStats;
-    }
-  };
 
   if (loading) return <LoadingSpinner centered />;
 
@@ -596,7 +581,7 @@ export const AdminOrders: React.FC = () => {
                 );
               })} */}
               {paginatedOrders.map((order) => {
-                const isEditable = isBeforeCutoff(order.createdAt || "");
+                const isEditable = isBeforeCutoff(order.createdAt);
                 return (
                   <tr
                     key={order.id}
@@ -831,7 +816,7 @@ export const AdminOrders: React.FC = () => {
               setSelectedOrder(null);
             }}
             order={selectedOrder}
-            isEditable={isBeforeCutoff(selectedOrder.createdAt || "")}
+            isEditable={isBeforeCutoff(selectedOrder.createdAt || 0)}
             onSubmit={handleOrderUpdate}
             title={`Mã đơn hàng: ${selectedOrder.id}`}
           />

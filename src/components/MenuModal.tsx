@@ -6,13 +6,11 @@ import {
   Row,
   Col,
   Alert,
-  Badge,
   Table,
   Card,
 } from "react-bootstrap";
 import { CustomerInfo, MenuItem, CartItem } from "../types/api";
 import { menuService } from "../services/api";
-import { config } from "../config/config";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { PlusCircle, MinusCircle, Trash2 } from "lucide-react";
 
@@ -22,7 +20,7 @@ interface MenuModalProps {
   customerInfo: CustomerInfo;
   cart: CartItem[];
   total: number;
-  onSubmit: (orderData: any) => Promise<void>;
+  onSubmit: (orderData: object) => Promise<void>;
   showMenu?: boolean;
   onUpdateCart?: (cart: CartItem[]) => void;
 }
@@ -47,19 +45,49 @@ export const MenuModal: React.FC<MenuModalProps> = ({
     orderNote: "",
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [, setToast] = useState<{
+    show: boolean;
+    type: "success" | "error" | "warning" | "info";
+    title: string;
+    message: string;
+    timestamp: string;
+  }>({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    timestamp: new Date().toISOString(),
+  });
+
   useEffect(() => {
     if (showMenu) {
       fetchMenu();
     }
   }, [showMenu]);
+  const showToast = (
+    type: "success" | "error" | "warning" | "info",
+    title: string,
+    message: string
+  ) => {
+    setToast({
+      show: true,
+      type,
+      title,
+      message,
+      timestamp: new Date().toISOString(),
+    });
+  };
 
   const fetchMenu = async () => {
     try {
       setLoading(true);
       const response = await menuService.getMenu();
       setMenuItems(response.data);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      setError("Failed to load menu items");
+      showToast("error", `Error Fetching menu`, "Failed to load menu items");
+      // setError("Failed to load menu items");
     } finally {
       setLoading(false);
     }
@@ -85,6 +113,7 @@ export const MenuModal: React.FC<MenuModalProps> = ({
 
       await onSubmit(orderData);
       onHide();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setError("Failed to place order. Please try again.");
     } finally {

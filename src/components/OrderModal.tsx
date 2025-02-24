@@ -76,6 +76,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
         isEditable = false;
       }
       setMenuItems(response.data);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       setError("Failed to load menu items");
     } finally {
@@ -123,8 +124,9 @@ export const OrderModal: React.FC<OrderModalProps> = ({
         orderDetails: cart,
         paymentMethod: orderExtraItem.paymentMethod || "",
         paymentType: orderExtraItem.paymentType || "",
-        status: "pending",
+        status: "P",
         note: orderExtraItem.orderNote,
+        createdAt: 0,
       };
 
       await onSubmit(orderData);
@@ -133,6 +135,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
         setSuccess(null);
         onHide();
       }, 1500);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setError("Cập nhật đơn hàng thất bại");
     } finally {
@@ -208,14 +211,18 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                     <dd className="col-sm-7">
                       <Badge
                         bg={
-                          order?.status === "completed"
+                          order?.status === "S"
                             ? "success"
-                            : order?.status === "cancelled"
+                            : order?.status === "C"
                             ? "danger"
                             : "warning"
                         }
                       >
-                        {order?.status || "Chưa có trạng thái"}
+                        {order?.status === "S"
+                          ? "Hoàn tất"
+                          : order?.status === "C"
+                          ? "Đã huỷ"
+                          : "Đang xử lý"}
                       </Badge>
                     </dd>
 
@@ -242,6 +249,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                           <strong>Loại hình thanh toán:</strong>
                         </Form.Label>
                         <Form.Select
+                          disabled={!isEditable}
                           value={orderExtraItem.paymentType}
                           onChange={(e) =>
                             setOrderExtraItem((prev) => ({
@@ -261,6 +269,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                           <strong>Hình thức thanh toán: </strong>
                         </Form.Label>
                         <Form.Select
+                          disabled={!isEditable}
                           value={orderExtraItem.paymentMethod}
                           onChange={(e) =>
                             setOrderExtraItem((prev) => ({
@@ -282,6 +291,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                           <strong>Ghi chú:</strong>
                         </Form.Label>
                         <Form.Control
+                          disabled={!isEditable}
                           as="textarea"
                           rows={3}
                           placeholder="Ghi chú..."

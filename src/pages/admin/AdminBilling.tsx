@@ -8,12 +8,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 import { adminService } from "../../services/api";
-import { AdminBillingSummary } from "../../types/api";
+import { AdminBillingSummary, ApiError } from "../../types/api";
 import { LoadingSpinner } from "../../components/LoadingSpinner";
 import { useToast } from "../../contexts/ToastContext";
 import { EmptyState } from "../../components/EmptyState";
@@ -33,8 +30,10 @@ export const AdminBilling: React.FC = () => {
     try {
       const response = await adminService.getAdminBillingSummary();
       setSummary(response.data);
-    } catch (error) {
-      handleApiError(error);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const apiError: ApiError = error;
+      handleApiError(apiError);
     } finally {
       setLoading(false);
     }

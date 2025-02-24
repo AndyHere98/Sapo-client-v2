@@ -94,8 +94,9 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
 
   const isBeforeCutoff = (orderDate: number) => {
     const orderDateTime = new Date(orderDate);
-    const cutoffTime = parse(config.orderCutoffTime, "HH:mm", orderDateTime);
-    return isBefore(orderDateTime, cutoffTime);
+    const currentDate = new Date();
+    const cutoffTime = parse(config.orderCutoffTime, "HH:mm", currentDate);
+    return isBefore(cutoffTime, orderDateTime);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -109,6 +110,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
     setPagination((prev) => ({ ...prev, currentPage: page }));
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleOrderUpdate = async (orderData: any) => {
     if (!selectedOrder) return;
 
@@ -442,7 +444,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
             setSelectedOrder(null);
           }}
           order={selectedOrder}
-          isEditable={isBeforeCutoff(selectedOrder.createdAt || "")}
+          isEditable={isBeforeCutoff(selectedOrder.createdAt || 0)}
           onSubmit={handleOrderUpdate}
           title={`Mã đơn hàng: ${selectedOrder.id}`}
         />

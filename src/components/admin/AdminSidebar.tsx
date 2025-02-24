@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Nav } from "react-bootstrap";
 import { NavLink, useLocation } from "react-router-dom";
 import {
@@ -15,7 +15,7 @@ export const AdminSidebar: React.FC = () => {
   const [isHovered, setIsHovered] = useState(false);
   const location = useLocation();
 
-  const sidebarWidth = isCollapsed && !isHovered ? 70 : 250;
+  // const sidebarWidth = isCollapsed && !isHovered ? 70 : 250;
 
   const sidebarVariants = {
     expanded: { width: 250 },

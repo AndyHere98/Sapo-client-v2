@@ -77,7 +77,7 @@ export const AdminCustomers: React.FC = () => {
   const [editingCustomerName, setEditingCustomerName] = useState<string>("");
   const [editingCustomerPhone, setEditingCustomerPhone] = useState<string>("");
   const [editingCustomerEmail, setEditingCustomerEmail] = useState<string>("");
-  const [customerEdits, setCustomerEdits] = useState<CustomerInfo>({
+  const [, setCustomerEdits] = useState<CustomerInfo>({
     customerName: editingCustomerName,
     customerPhone: editingCustomerPhone,
     customerEmail: editingCustomerEmail,
@@ -93,7 +93,8 @@ export const AdminCustomers: React.FC = () => {
       setLoading(true);
       const response = await adminService.getAdminCustomerSummary();
       setSummary(response.data);
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
       handleApiError(error);
     } finally {
       setLoading(false);
@@ -138,7 +139,7 @@ export const AdminCustomers: React.FC = () => {
         customerEmail: "",
       });
       await fetchCustomerSummary();
-    } catch (error) {
+    } catch (error: any) {
       handleApiError(error);
     } finally {
       setLoading(false);

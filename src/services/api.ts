@@ -31,9 +31,28 @@ export const authService = {
   },
   registerCustomer: async (customerInfo: CustomerInfo) => {
     console.log('Register Customer', customerInfo);
-    
-    const response = await api.post<Promise<SuccessfulResponse | ApiError>>('/user/register', customerInfo);
-    return response;
+    // try {
+      const response = await api.post<Promise<SuccessfulResponse | ApiError>>('/user/register', customerInfo);
+      return response;
+      //   return { message: response.data.message, timestamp: response.data.timestamp };
+    // } catch (error) {
+    //   if (axios.isAxiosError(error) && error.response) {
+    //     const errorData: ApiError = {
+    //       apiPath: '/user/register',
+    //       errorStatus: error.response.status,
+    //       errorMessage: error.response.data?.errorMessage || "Unknown error occurred",
+    //       errorTime: new Date().toISOString(),
+    //       errorData: error.response.data || null,
+    //     };
+    //     return errorData;
+    //   }
+    //   return {
+    //     apiPath: '/user/register',
+    //     errorStatus: 500,
+    //     errorMessage: "Failed to connect to the server",
+    //     errorTime: new Date().toISOString(),
+    //   };
+    // }
   }
 };
 

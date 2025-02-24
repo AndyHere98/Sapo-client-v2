@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { ApiError, CustomerInfo } from "./types/api";
 import { authService } from "./services/api";
@@ -14,12 +14,12 @@ function App() {
     customerPhone: "",
     customerEmail: "",
   });
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [showCustomerRegisterPage, setShowCustomerRegisterPage] =
     useState(true);
   const [showSplash, setShowSplash] = useState(true);
 
-  const [toast, setToast] = useState<{
+  const [, setToast] = useState<{
     show: boolean;
     type: "success" | "error" | "warning" | "info";
     title: string;
@@ -79,7 +79,6 @@ function App() {
     <AnimatePresence mode="wait">
       {showCustomerRegisterPage ? (
         <CustomerRegisterPage
-          show={true}
           onHide={() => setShowCustomerRegisterPage(false)}
         />
       ) : (

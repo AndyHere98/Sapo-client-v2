@@ -46,12 +46,7 @@ export const AppRoutes = ({ customerInfo, onGetCustomerInfo }: RoutesProps) => {
         },
         {
           path: "summary",
-          element: (
-            <OrderSummary
-              customerInfo={customerInfo}
-              onGetCustomerInfo={onGetCustomerInfo}
-            />
-          ),
+          element: <OrderSummary onGetCustomerInfo={onGetCustomerInfo} />,
         },
       ],
     },

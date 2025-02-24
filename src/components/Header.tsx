@@ -32,8 +32,8 @@
 
 import React, { useEffect, useState } from "react";
 import { Navbar, Nav, Container } from "react-bootstrap";
-import { useNavigate, Link } from "react-router-dom";
-import { FaHome, FaBars, FaInfoCircle, FaHistory } from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { FaHome, FaBars, FaHistory } from "react-icons/fa";
 import { FaLayerGroup } from "react-icons/fa6";
 import { BiFoodMenu } from "react-icons/bi";
 import { CustomerInfo } from "../types/api";
@@ -49,7 +49,6 @@ export const Header: React.FC<HeaderProps> = ({
   onGetCustomerInfo,
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     onGetCustomerInfo();

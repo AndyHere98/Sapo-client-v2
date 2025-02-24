@@ -20,7 +20,6 @@ import {
   OrderSummaryResponse,
   TopCustomer,
   ApiError,
-  CustomerInfo,
 } from "../types/api";
 import { config } from "../config/config";
 
@@ -110,12 +109,12 @@ const OrderDetailsRow: React.FC<OrderDetailsRowProps> = ({ order }) => {
                       <dt className="col-sm-7">Hình thức thanh toán:</dt>
                       <dd className="col-sm-5">{order.paymentType}</dd>
 
-                      {order.address && (
+                      {/* {order.address && (
                         <>
                           <dt className="col-sm-7">Địa chỉ:</dt>
                           <dd className="col-sm-5">{order.address}</dd>
                         </>
-                      )}
+                      )} */}
                       {order.note && (
                         <>
                           <dt className="col-sm-7">Ghi chú:</dt>
@@ -430,11 +429,9 @@ const TodayOrdersModal: React.FC<TodayOrdersModalProps> = ({
 };
 
 interface OrderSummaryProps {
-  customerInfo: CustomerInfo;
   onGetCustomerInfo: () => void;
 }
 export const OrderSummary: React.FC<OrderSummaryProps> = ({
-  customerInfo,
   onGetCustomerInfo,
 }) => {
   const [summaryData, setSummaryData] = useState<OrderSummaryResponse | null>(

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Modal, Button, Form, Container } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { authService } from "../services/api";
-import { ApiError, CustomerInfo, SuccessfulResponse } from "../types/api";
+import { ApiError, CustomerInfo } from "../types/api";
 import { CustomToast } from "./CustomToast";
 
 interface CustomerModalProps {
@@ -10,7 +10,8 @@ interface CustomerModalProps {
 }
 
 const CustomerModal: React.FC<CustomerModalProps> = ({ onHide }) => {
-  const [show, setShow] = useState<boolean>(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [show] = useState<boolean>(true);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     customerName: "",
     customerPhone: "",
@@ -67,7 +68,7 @@ const CustomerModal: React.FC<CustomerModalProps> = ({ onHide }) => {
       console.log("handleRegisterCustomer", response);
 
       if (response.status === 201) {
-        const successfulResponse: SuccessfulResponse = response.data;
+        const successfulResponse: any = response.data;
         showToast(
           "success",
           "Customer Information",
@@ -82,7 +83,12 @@ const CustomerModal: React.FC<CustomerModalProps> = ({ onHide }) => {
           });
         }, 1000);
       } else {
-        const apiError: ApiError = response.data;
+        const apiError: ApiError = {
+          apiPath: "/user/register",
+          errorStatus: 500,
+          errorMessage: "Failed to connect to the server",
+          errorTime: new Date().toISOString(),
+        };
         showToast(
           "error",
           `Error ${apiError.errorStatus}`,

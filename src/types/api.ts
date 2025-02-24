@@ -4,6 +4,7 @@ export interface ApiError {
   errorStatus: number;
   errorMessage: string;
   errorTime: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errorData?: any;
 }
 
@@ -18,7 +19,7 @@ export interface CustomerInfo {
   customerPhone: string;
   customerEmail: string;
   ipAddress?: string;
-  isAdmin: boolean;
+  isAdmin?: boolean | false;
   pcHostName?: string;
   balance?: number;
 }
@@ -41,7 +42,7 @@ export interface OrderItem {
   customerEmail: string;
   orderDetails: CartItem[];
   status?: 'P' | 'S' | 'C';
-  totalPrice?: number;
+  totalPrice?: number | 0;
   createdAt: number | 0;
   note?: string;
   paymentMethod?: string;
@@ -75,6 +76,7 @@ export interface DailyOrderSummary {
   dishName: string;
   quantity: number;
   sumPrice: number;
+  unitPrice: number;
 }
 export interface Order {
   id: string;
@@ -127,10 +129,10 @@ export interface TopCustomer {
 // }
 
 export interface AdminBillingSummary {
-  totalRevenue: number;
-  dailyRevenue: number;
-  monthlyRevenue: number;
-  yearlyRevenue: number;
+  totalRevenue: number | 0;
+  dailyRevenue: number | 0;
+  monthlyRevenue: number | 0;
+  yearlyRevenue: number | 0;
   revenueStats: {
     date: string;
     revenue: number;
