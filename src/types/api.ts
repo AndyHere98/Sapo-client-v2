@@ -48,6 +48,45 @@ export interface OrderItem {
   isPaid?: boolean;
 }
 
+export interface YearlyOrderSummary {
+  totalSpending: number;
+  totalDish: number;
+  totalOrders: number;
+  year: string;
+  monthlyOrderSummary: MonthlyOrderSummary[];
+}
+
+export interface MonthlyOrderSummary {
+  totalSpending: number;
+  totalDish: number;
+  totalOrders: number;
+  month: string;
+  orderList: OrderItem[];
+  topCustomer: TopCustomer[];
+}
+
+export interface OrderSummaryResponse {
+  todayOrders: OrderItem[];
+  dailyOrders: DailyOrderSummary[];
+  yearlyOrders: YearlyOrderSummary[];
+}
+export interface DailyOrderSummary {
+  dishName: string;
+  quantity: number;
+  sumPrice: number;
+}
+export interface Order {
+  id: string;
+  customerInfo: CustomerInfo;
+  items: CartItem[];
+  paymentType: string;
+  paymentRequest: string;
+  total: number;
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CartItem extends MenuItem {
   quantity: number;
 }
