@@ -96,7 +96,8 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
     const orderDateTime = new Date(orderDate);
     const currentDate = new Date();
     const cutoffTime = parse(config.orderCutoffTime, "HH:mm", currentDate);
-    return isBefore(cutoffTime, orderDateTime);
+    const isTrue = isBefore(orderDateTime, cutoffTime);
+    return isTrue;
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -444,7 +445,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({
             setSelectedOrder(null);
           }}
           order={selectedOrder}
-          isEditable={isBeforeCutoff(selectedOrder.createdAt || 0)}
+          isEditable={isBeforeCutoff(selectedOrder.createdAt || 0) && selectedOrder.status === config.orderPending}
           onSubmit={handleOrderUpdate}
           title={`Mã đơn hàng: ${selectedOrder.id}`}
         />

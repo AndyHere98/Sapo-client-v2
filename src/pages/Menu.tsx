@@ -135,7 +135,7 @@ export const Menu: React.FC<MenuProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handlePlaceOrder = async (orderExtraItem: any) => {
     try {
-      console.log("orderExtraItem", orderExtraItem);
+      // console.log("orderExtraItem", orderExtraItem);
 
       const order: OrderItem = {
         ...customerInfo,

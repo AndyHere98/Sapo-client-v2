@@ -30,7 +30,7 @@ export const authService = {
     return response;
   },
   registerCustomer: async (customerInfo: CustomerInfo) => {
-    console.log('Register Customer', customerInfo);
+    // console.log('Register Customer', customerInfo);
     // try {
       const response = await api.post<Promise<SuccessfulResponse | ApiError>>('/user/register', customerInfo);
       return response;
@@ -67,7 +67,7 @@ export const menuService = {
 // Order Service
 export const orderService = {
   placeOrder: async (order: OrderItem) => {
-    console.log('Place order', order);
+    // console.log('Place order', order);
     
     const response = await api.post<Order>('/orders/place', order);
     return response;
@@ -104,7 +104,7 @@ export const adminService = {
   // Orders
   getAdminOrderSummary: async () => {
     const response = await api.get<AdminOrderSummary>('/admin/orders/summary');
-    console.log('getAdminOrderSummary', response);
+    // console.log('getAdminOrderSummary', response);
     return response;
   },
 
@@ -121,22 +121,22 @@ export const adminService = {
   // Customers
   getAdminCustomerSummary: async () => {
     const response = await api.get<AdminCustomerSummary>('/admin/customers/summary');
-    console.log('getAdminCustomerSummary', response);
+    // console.log('getAdminCustomerSummary', response);
     return response;
   },
 
   updateCustomer: async (ipAddress: string, customerInfo: Partial<CustomerInfo>) => {
-    console.log('updateCustomer request', customerInfo);
+    // console.log('updateCustomer request', customerInfo);
     
     const response = await api.put<Promise<SuccessfulResponse | ApiError>>(`/admin/customers/${ipAddress}`, customerInfo);
-    console.log('updateCustomer', response);
+    // console.log('updateCustomer', response);
     return response;
   },
 
   // Billing
   getAdminBillingSummary: async () => {
     const response = await api.get<AdminBillingSummary>('/admin/billing/summary');
-    console.log('getAdminBillingSummary', response);
+    // console.log('getAdminBillingSummary', response);
     return response;
   },
 };

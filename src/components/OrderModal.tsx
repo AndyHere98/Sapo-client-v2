@@ -310,7 +310,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
               </Col>
             </Row>
 
-            {isEditable && (
+            {isEditable && order?.status == 'P' && (
               <div className="menu-section mb-4">
                 <h6 className="mb-3">Menu hôm nay</h6>
 
@@ -381,7 +381,7 @@ export const OrderModal: React.FC<OrderModalProps> = ({
                         <tr key={item.id}>
                           <td>{item.name}</td>
                           <td>
-                            {isEditable ? (
+                            {isEditable && order?.status == 'P' ? (
                               <div className="quantity-controls d-flex align-items-center">
                                 <Button
                                   size="sm"

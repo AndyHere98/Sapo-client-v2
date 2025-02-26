@@ -48,11 +48,15 @@ const OrderDetailsRow: React.FC<OrderDetailsRowProps> = ({ order }) => {
               order.status === config.orderCompleted
                 ? "success"
                 : order.status === config.orderCancelled
-                ? "warning"
-                : "danger"
+                ? "danger"
+                : "warning"
             }
           >
-            {order.status}
+            {order.status === config.orderCompleted
+                ? "Hoàn tất"
+                : order.status === config.orderCancelled
+                ? "Đã huỷ"
+                : "Đang xử lý"}
           </Badge>
         </td>
         <td>
@@ -87,12 +91,12 @@ const OrderDetailsRow: React.FC<OrderDetailsRowProps> = ({ order }) => {
                       <dt className="col-sm-4">Phone:</dt>
                       <dd className="col-sm-8">{order.customerPhone}</dd>
 
-                      <dt className="col-sm-4">Payment:</dt>
+                      {/* <dt className="col-sm-4">Payment:</dt>
                       <dd className="col-sm-8">
                         {order?.paymentMethod === "POSTPAID"
                           ? "Pay on Delivery"
                           : "Pay Now"}
-                      </dd>
+                      </dd> */}
                     </dl>
                   </div>
                 </Col>
@@ -104,10 +108,17 @@ const OrderDetailsRow: React.FC<OrderDetailsRowProps> = ({ order }) => {
 
                     <dl className="row mb-0">
                       <dt className="col-sm-7">Loại hình thanh toán:</dt>
-                      <dd className="col-sm-5">{order.paymentMethod}</dd>
+                      <dd className="col-sm-5">{
+                          order.paymentMethod === 'MOMO' ? 'MoMo' : 
+                          order.paymentMethod === 'CASH' ? 'Tiền mặt' :
+                          order.paymentMethod === 'BANK' ? 'Chuyển khoản' : 'Chưa biết'
+                        }</dd>
 
                       <dt className="col-sm-7">Hình thức thanh toán:</dt>
-                      <dd className="col-sm-5">{order.paymentType}</dd>
+                      <dd className="col-sm-5">{
+                          order.paymentType === 'POSTPAID' ? 'Trả sau' : 
+                          order.paymentType === 'PREPAID' ? 'Trả trước' : 'Chưa biết'
+                        }</dd>
 
                       {/* {order.address && (
                         <>
@@ -127,7 +138,14 @@ const OrderDetailsRow: React.FC<OrderDetailsRowProps> = ({ order }) => {
               </Row>
 
               <Card className="mb-4 shadow-sm bg-light bg-light">
-                <Card.Header className="bg-warning d-flex justify-content-between align-items-center">
+                <Card.Header className={`${
+              order.status === config.orderCompleted
+                ? "bg-success text-white"
+                : order.status === config.orderCancelled
+                ? "bg-danger text-white"
+                : "bg-warning"
+            } d-flex justify-content-between align-items-center`}
+                >
                   <div className="d-flex align-items-center gap-3">
                     <h2 className="h5 mb-0">Món ăn đã chọn</h2>
                   </div>
@@ -464,7 +482,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   const fetchSummary = async () => {
     try {
       const response = await orderService.getSummary();
-      console.log("fetchSummary", response.data);
+      // console.log("fetchSummary", response.data);
 
       setSummaryData(response.data);
     } catch (error) {

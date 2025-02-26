@@ -1,7 +1,6 @@
 export const config = {
-    // baseApiUrl: 'http://localhost:8080/api/v1',
-    baseApiUrl: 'http://192.168.1.5:8080/api/v1',
-    orderCutoffTime: '23:59',
+    baseApiUrl: (window as any)._env_?.API_URL || 'http://localhost:8686/api/v1',
+    orderCutoffTime: (window as any)._env_?.ORDER_CUTOFF_TIME || '23:30',
     toastDuration: 3000,
     currency: 'VND',
     orderPending: 'P',

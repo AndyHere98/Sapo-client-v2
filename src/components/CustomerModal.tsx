@@ -54,7 +54,7 @@ const CustomerModal: React.FC<CustomerModalProps> = ({ onHide }) => {
 
     if (form.checkValidity()) {
       // Handle the form submission here
-      console.log("Form submitted:", customerInfo);
+      // console.log("Form submitted:", customerInfo);
       await handleRegisterCustomer(customerInfo);
       handleClose();
     }
@@ -65,7 +65,7 @@ const CustomerModal: React.FC<CustomerModalProps> = ({ onHide }) => {
   const handleRegisterCustomer = async (customerInfo: CustomerInfo) => {
     try {
       const response = await authService.registerCustomer(customerInfo);
-      console.log("handleRegisterCustomer", response);
+      // console.log("handleRegisterCustomer", response);
 
       if (response.status === 201) {
         const successfulResponse: any = response.data;
